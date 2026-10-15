@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { SettingsProvider } from '@/lib/settings-context';
 import { LanguageProvider } from '@/lib/language-context';
+import { CryptoProvider } from '@/lib/crypto-context';
+import { CryptoGate } from '@/screens/UnlockScreen';
 import { SplashScreen } from '@/screens/SplashScreen';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { AuthScreen } from '@/screens/AuthScreen';
@@ -200,7 +202,11 @@ export default function App() {
   return (
     <AuthProvider>
       <LanguageProvider>
-        <AppContent />
+        <CryptoProvider>
+          <CryptoGate>
+            <AppContent />
+          </CryptoGate>
+        </CryptoProvider>
       </LanguageProvider>
     </AuthProvider>
   );

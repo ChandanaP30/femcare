@@ -176,10 +176,7 @@ export function ChatScreen() {
         </button>
       </div>
 
-      <div className="card-soft p-3 flex items-start gap-2 mb-3">
-        <AlertCircle size={16} className="text-warning-500 shrink-0 mt-0.5" />
-        <p className="text-xs text-neutral-600 dark:text-neutral-400">{t('chatDisclaimer')}</p>
-      </div>
+      <p className="mb-3 text-[11px] text-ink-muted">General information only, not medical advice.</p>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pb-4">
         {messages.map((msg) => (
