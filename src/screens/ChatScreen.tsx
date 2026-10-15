@@ -2,9 +2,28 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import type { ChatMessage } from '@/lib/types';
-import { generateResponse, getSuggestedQuestions } from '@/lib/chatbot';
-import { Send, Sparkles, AlertCircle } from 'lucide-react';
+import { getSuggestedQuestions } from '@/lib/chatbot';
+import { Send, Sparkles, AlertCircle, Copy, Check, RotateCcw } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useLanguage } from '@/lib/language-context';
+
+const FAILED_REPLY = "I couldn't reach the assistant just now. Please check your connection and try again.";
+
+// Converts any Markdown the model returns into readable plain text.
+function toPlainText(text: string): string {
+  return text
+    .replace(/^\s*\|?[-:| ]+\|[-:| ]*$/gm, '')
+    .replace(/^\s*\|(.+)\|\s*$/gm, (_m, row: string) =>
+      row.split('|').map((c) => c.trim()).filter(Boolean).join(' - '))
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s*[-*]\s+/gm, '- ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 export function ChatScreen() {
   const { user } = useAuth();
@@ -14,27 +33,29 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(true);
   const [typing, setTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const loadMessages = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     const { data } = await supabase
-      .from('chat_messages')
+      .from('chat_history')
       .select('*')
       .eq('user_id', user.id)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(200);
 
     const loaded = (data as ChatMessage[]) || [];
-
     if (loaded.length === 0) {
-      const welcome: ChatMessage = {
-        id: 'welcome',
-        user_id: user.id,
-        sender: 'assistant',
-        message: t('welcomeBack') + "! " + t('chatAssistantName') + ". " + t('askAI') + ".",
-        created_at: new Date().toISOString(),
-      };
-      setMessages([welcome]);
+      setMessages([
+        {
+          id: 'welcome',
+          user_id: user.id,
+          sender: 'assistant',
+          message: `${t('welcomeBack')}! ${t('chatAssistantName')}. ${t('askAI')}.`,
+          created_at: new Date().toISOString(),
+        },
+      ]);
     } else {
       setMessages(loaded);
     }
@@ -50,60 +71,87 @@ export function ChatScreen() {
   }, [messages, typing]);
 
   async function sendMessage(text: string) {
-    if (!user || !text.trim()) return;
+    const content = text.trim();
+    if (!user || !content || typing) return;
     setInput('');
 
     const userMsg: ChatMessage = {
       id: 'temp-' + Date.now(),
       user_id: user.id,
       sender: 'user',
-      message: text,
+      message: content,
       created_at: new Date().toISOString(),
     };
+
+    // Conversation sent to the assistant, without the local welcome message.
+    const outgoing = [...messages, userMsg]
+      .filter((m) => m.id !== 'welcome')
+      .slice(-12)
+      .map((m) => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.message }));
+
     setMessages((prev) => [...prev, userMsg]);
 
-    // Save user message
-    const { data: savedUserMsg } = await supabase
-      .from('chat_messages')
-      .insert({ user_id: user.id, sender: 'user', message: text })
+    const { data: savedUser } = await supabase
+      .from('chat_history')
+      .insert({ user_id: user.id, mode: 'general', sender: 'user', message: content })
       .select()
       .single();
-
-    if (savedUserMsg) {
-      setMessages((prev) => prev.map((m) => (m.id === userMsg.id ? savedUserMsg as ChatMessage : m)));
+    if (savedUser) {
+      setMessages((prev) => prev.map((m) => (m.id === userMsg.id ? (savedUser as ChatMessage) : m)));
     }
 
-    // Simulate typing
     setTyping(true);
-    const response = generateResponse(text, messages, lang);
+    const { data, error } = await supabase.functions.invoke<{ reply?: string }>('chat-assistant', {
+      body: { messages: outgoing, language: lang },
+    });
+    setTyping(false);
 
-    setTimeout(async () => {
-      setTyping(false);
-      const assistantMsg: ChatMessage = {
-        id: 'temp-ai-' + Date.now(),
-        user_id: user.id,
-        sender: 'assistant',
-        message: response,
-        created_at: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
+    const reply = !error && data?.reply ? data.reply : null;
+    const replyText = reply ?? FAILED_REPLY;
+    const assistantMsg: ChatMessage = {
+      id: 'temp-ai-' + Date.now(),
+      user_id: user.id,
+      sender: 'assistant',
+      message: replyText,
+      created_at: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, assistantMsg]);
 
-      const { data: savedAiMsg } = await supabase
-        .from('chat_messages')
-        .insert({ user_id: user.id, sender: 'assistant', message: response })
+    // Only real answers are saved, so failed attempts do not clutter the history.
+    if (reply) {
+      const { data: savedAi } = await supabase
+        .from('chat_history')
+        .insert({ user_id: user.id, mode: 'general', sender: 'assistant', message: reply })
         .select()
         .single();
-
-      if (savedAiMsg) {
-        setMessages((prev) => prev.map((m) => (m.id === assistantMsg.id ? savedAiMsg as ChatMessage : m)));
+      if (savedAi) {
+        setMessages((prev) => prev.map((m) => (m.id === assistantMsg.id ? (savedAi as ChatMessage) : m)));
       }
-    }, 800 + Math.random() * 600);
+    }
+  }
+
+  async function copyMessage(id: string, text: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch {
+      /* clipboard unavailable: ignore */
+    }
+  }
+
+  async function startNewChat() {
+    if (!user) return;
+    if (!confirm('Start a new chat? This clears the saved conversation.')) return;
+    await supabase.from('chat_history').delete().eq('user_id', user.id);
+    setMessages([]);
+    await loadMessages();
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -118,29 +166,49 @@ export function ChatScreen() {
           <h1 className="font-serif text-xl font-bold text-neutral-900 dark:text-neutral-100">{t('chatAssistantName')}</h1>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('cyclePredictionsEstimates')}</p>
         </div>
+        <button
+          onClick={startNewChat}
+          aria-label="New chat"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary-100 px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-primary-200"
+        >
+          <RotateCcw size={14} strokeWidth={2} />
+          New chat
+        </button>
       </div>
 
-      {/* Disclaimer */}
       <div className="card-soft p-3 flex items-start gap-2 mb-3">
         <AlertCircle size={16} className="text-warning-500 shrink-0 mt-0.5" />
-        <p className="text-xs text-neutral-600 dark:text-neutral-400">
-            {t('chatDisclaimer')}
-        </p>
+        <p className="text-xs text-neutral-600 dark:text-neutral-400">{t('chatDisclaimer')}</p>
       </div>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-3 pb-4">
         {messages.map((msg) => (
           <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
               msg.sender === 'user'
-                ? 'bg-primary-500 text-white rounded-br-md'
+                ? 'bg-primary-500 text-ink rounded-br-md'
                 : 'bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 rounded-bl-md'
             }`}>
-              <p className="text-sm whitespace-pre-line leading-relaxed">{msg.message}</p>
-              <p className={`text-xs mt-1.5 ${msg.sender === 'user' ? 'text-white/60' : 'text-neutral-400'}`}>
+              {msg.sender === 'user' ? (
+                <p className="text-sm whitespace-pre-line leading-relaxed">{msg.message}</p>
+              ) : (
+                <div className="chat-markdown text-sm leading-relaxed">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.message}</ReactMarkdown>
+                </div>
+              )}
+              <p className={`text-xs mt-1.5 ${msg.sender === 'user' ? 'text-ink/60' : 'text-neutral-400'}`}>
                 {new Date(msg.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
               </p>
+              {msg.sender === 'assistant' && msg.id !== 'welcome' && (
+                <button
+                  onClick={() => copyMessage(msg.id, msg.message)}
+                  aria-label="Copy reply"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-ink-muted transition-colors hover:text-ink"
+                >
+                  {copiedId === msg.id ? <Check size={13} /> : <Copy size={13} />}
+                  {copiedId === msg.id ? 'Copied' : 'Copy'}
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -158,7 +226,6 @@ export function ChatScreen() {
         )}
       </div>
 
-      {/* Suggested questions */}
       {messages.length <= 1 && (
         <div className="flex flex-wrap gap-2 mb-3">
           {getSuggestedQuestions(lang).slice(0, 4).map((q) => (
@@ -173,19 +240,18 @@ export function ChatScreen() {
         </div>
       )}
 
-      {/* Input */}
       <div className="flex gap-2">
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-          placeholder={t('askAI') + "..."}
+          placeholder={t('askAI') + '...'}
           className="input-field flex-1"
         />
         <button
           onClick={() => sendMessage(input)}
-          disabled={!input.trim()}
+          disabled={!input.trim() || typing}
           className="btn-primary !px-4 flex items-center justify-center"
         >
           <Send size={20} />

@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Logo } from '@/components/Logo';
 import { NAV_ITEMS, type NavKey } from '@/components/nav-items';
 import { useLanguage } from '@/lib/language-context';
-import { Menu, X, ChevronRight } from 'lucide-react';
+import { Menu, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { OfflineBanner } from './OfflineBanner';
 
 interface AppShellProps {
@@ -10,13 +10,15 @@ interface AppShellProps {
   onNavChange: (nav: NavKey) => void;
   children: ReactNode;
   onNavigate: (page: string) => void;
+  showBack?: boolean;
+  onBack?: () => void;
 }
 
 const EXTRA_PAGE_KEYS = [
   'symptoms', 'log-period', 'history', 'chat', 'locator', 'education', 'leave-guide', 'settings', 'privacy', 'about',
 ] as const;
 
-export function AppShell({ currentNav, onNavChange, children, onNavigate }: AppShellProps) {
+export function AppShell({ currentNav, onNavChange, children, onNavigate, showBack = false, onBack }: AppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useLanguage();
 
@@ -47,7 +49,18 @@ export function AppShell({ currentNav, onNavChange, children, onNavigate }: AppS
       <div className="relative w-full max-w-[430px] min-h-screen bg-neutral-50 dark:bg-neutral-900 shadow-2xl flex flex-col">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-700 px-4 py-3 flex items-center justify-between shrink-0">
-          <Logo size="sm" />
+          <div className="flex min-w-0 items-center gap-2">
+            {showBack && (
+              <button
+                onClick={onBack}
+                aria-label="Back"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-ink transition-colors hover:bg-primary-200 focus:outline-none focus:ring-2 focus:ring-primary-300"
+              >
+                <ChevronLeft size={20} strokeWidth={2} />
+              </button>
+            )}
+            <Logo size="sm" />
+          </div>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"

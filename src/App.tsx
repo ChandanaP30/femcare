@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
 import { SettingsProvider } from '@/lib/settings-context';
 import { LanguageProvider } from '@/lib/language-context';
@@ -38,6 +38,8 @@ type AppPage =
   | 'about'
   | 'leave-guide';
 
+const NAV_KEYS: NavKey[] = ['home', 'calendar', 'insights', 'sos', 'profile'];
+
 function AppContent() {
   const { user, profile, loading, signOut } = useAuth();
   const [showSplash, setShowSplash] = useState(true);
@@ -45,11 +47,28 @@ function AppContent() {
   const [currentNav, setCurrentNav] = useState<NavKey>('home');
   const [currentPage, setCurrentPage] = useState<AppPage>('home');
 
+  // In-app history of pages we came from. Every navigation pushes the page being left,
+  // and every back action pops it. A ref keeps popstate handling free of side effects.
+  const backStackRef = useRef<AppPage[]>([]);
+
   useEffect(() => {
     const seen = localStorage.getItem('femcare_onboarding_seen');
     if (seen && showSplash) {
       setShowSplash(false);
     }
+  }, []);
+
+  // Browser and device back: pop our own stack. With an empty stack, stay on the current page.
+  useEffect(() => {
+    function onPopState() {
+      const stack = backStackRef.current;
+      if (stack.length === 0) return;
+      const prev = stack.pop() as AppPage;
+      setCurrentPage(prev);
+      if (NAV_KEYS.includes(prev as NavKey)) setCurrentNav(prev as NavKey);
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
   function handleSplashDone() {
@@ -64,24 +83,41 @@ function AppContent() {
     localStorage.setItem('femcare_onboarding_seen', 'true');
   }
 
+  function navigateTo(page: AppPage) {
+    if (page === currentPage) return;
+    backStackRef.current.push(currentPage);
+    window.history.pushState({ femcare: true }, '');
+    setCurrentPage(page);
+    if (NAV_KEYS.includes(page as NavKey)) setCurrentNav(page as NavKey);
+  }
+
+  function goHome() {
+    setCurrentPage('home');
+    setCurrentNav('home');
+  }
+
+  // Header back button: returns to the real previous page. Falls back to Home when there is none.
+  function goBack() {
+    if (backStackRef.current.length === 0) {
+      goHome();
+      return;
+    }
+    // The popstate handler pops the stack and restores the previous page.
+    window.history.back();
+  }
+
   function handleNavChange(nav: NavKey) {
-    setCurrentNav(nav);
-    setCurrentPage(nav);
+    navigateTo(nav);
   }
 
   function handleNavigate(page: string) {
-    setCurrentPage(page as AppPage);
-    // Also update nav highlight if it's a main nav item
-    const navKeys: NavKey[] = ['home', 'calendar', 'insights', 'sos', 'profile'];
-    if (navKeys.includes(page as NavKey)) {
-      setCurrentNav(page as NavKey);
-    }
+    navigateTo(page as AppPage);
   }
 
   function handleSignOut() {
+    backStackRef.current = [];
     signOut();
-    setCurrentPage('home');
-    setCurrentNav('home');
+    goHome();
   }
 
   if (showSplash) {
@@ -142,9 +178,18 @@ function AppContent() {
     }
   }
 
+  // Secondary screens (anything that is not a bottom-nav tab) get the header back button.
+  const showBack = !NAV_KEYS.includes(currentPage as NavKey);
+
   return (
     <SettingsProvider>
-      <AppShell currentNav={currentNav} onNavChange={handleNavChange} onNavigate={handleNavigate}>
+      <AppShell
+        currentNav={currentNav}
+        onNavChange={handleNavChange}
+        onNavigate={handleNavigate}
+        showBack={showBack}
+        onBack={goBack}
+      >
         {renderPage()}
       </AppShell>
     </SettingsProvider>

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Period, DailyLog } from '@/lib/types';
 import MLCyclePrediction from '@/components/MLCyclePrediction';
 import BotanicalAccent from '@/components/BotanicalAccent';
-import { computeCycleInfo, formatDateShort, todayStr } from '@/lib/cycle';
+import { computeCycleInfo, formatDateShort, parseDate, todayStr } from '@/lib/cycle';
 import { MOODS, PHYSICAL_SYMPTOMS, EMOTIONAL_SYMPTOMS } from '@/lib/symptoms';
 import { CalendarPlus, Activity, Siren, MapPin, MessageCircle, ShieldCheck, ChevronRight, Droplet } from 'lucide-react';
 import type { NavKey } from '@/components/nav-items';
@@ -54,6 +54,20 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
   useEffect(() => { loadData(); }, [loadData]);
 
   const cycleInfo = profile ? computeCycleInfo(profile, periods) : null;
+
+  // Average of real logged cycles (gaps between period starts, 15 to 60 days), same basis as Period History.
+  const historyAverage = (() => {
+    const starts = periods
+      .map((p) => parseDate(p.start_date))
+      .filter((d): d is Date => d !== null)
+      .sort((a, b) => a.getTime() - b.getTime());
+    const lens: number[] = [];
+    for (let i = 1; i < starts.length; i++) {
+      const len = Math.round((starts[i].getTime() - starts[i - 1].getTime()) / 86400000);
+      if (len >= 15 && len <= 60) lens.push(len);
+    }
+    return lens.length ? Math.round(lens.reduce((a, b) => a + b, 0) / lens.length) : null;
+  })();
 
   const greeting = (() => {
     const hour = new Date().getHours();
@@ -166,8 +180,8 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
               {cycleInfo.daysUntilNextPeriod > 0 ? t('inAboutDays', { n: cycleInfo.daysUntilNextPeriod }) : t('dueNow')}
             </span>
             <div className="mt-5 grid grid-cols-3 gap-3 border-t border-primary-100 pt-5">
-              <Stat label={t('currentCycleLength')} value={`${cycleInfo.cycleLength} d`} />
-              <Stat label={t('averageCycleLength')} value={`${profile?.cycle_length || 28} d`} />
+              <Stat label="Predicted next cycle" value={`${cycleInfo.cycleLength} d`} />
+              <Stat label="Your average cycle" value={`${historyAverage ?? profile?.cycle_length ?? 28} d`} />
               <Stat label={t('periodDuration')} value={`${cycleInfo.periodDuration} d`} />
             </div>
             <button
