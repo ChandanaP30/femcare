@@ -61,7 +61,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    const theme = settings?.theme || 'system';
+    if (!settings?.theme) return;
+    const theme = settings.theme;
+    try { localStorage.setItem('femcare_theme', theme); } catch { /* storage unavailable */ }
     applyTheme(theme);
   }, [settings?.theme]);
 

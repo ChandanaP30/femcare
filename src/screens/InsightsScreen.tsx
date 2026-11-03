@@ -66,7 +66,7 @@ export function InsightsScreen() {
 
       {/* Disclaimer */}
       <div className="card-soft p-4 flex items-start gap-3">
-        <AlertCircle size={18} className="text-warning-500 shrink-0 mt-0.5" />
+        <AlertCircle size={18} className="text-warning-500 shrink-0 mt-0.5 dark:text-warning-300" />
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           {t('cyclePredictionsEstimates')}
         </p>
@@ -252,7 +252,7 @@ export function InsightsScreen() {
                       const duration = p.end_date ? Math.round((new Date(p.end_date).getTime() - new Date(p.start_date).getTime()) / (1000 * 60 * 60 * 24)) + 1 : null;
                       return (
                         <tr key={p.id} className="border-b border-neutral-100 dark:border-neutral-700/50">
-                          <td className="py-2.5 text-neutral-500">{periods.length - i}</td>
+                          <td className="py-2.5 text-neutral-500 dark:text-neutral-400">{periods.length - i}</td>
                           <td className="py-2.5 text-neutral-700 dark:text-neutral-300">{formatDate(p.start_date)}</td>
                           <td className="py-2.5 text-neutral-700 dark:text-neutral-300">{duration ? `${duration} ${t('days')}` : '—'}</td>
                           <td className="py-2.5 text-neutral-700 dark:text-neutral-300">{cycleLen ? `${cycleLen} ${t('days')}` : '—'}</td>
@@ -375,11 +375,11 @@ function LineChart({ data, max }: { data: { label: string; value: number }[]; ma
   return (
     <div>
       <svg viewBox="0 0 100 100" className="w-full h-32" preserveAspectRatio="none">
-        <polyline points={points} fill="none" stroke="#EC4899" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        <polyline points={points} fill="none" className="stroke-primary-500 dark:stroke-primary-300" strokeWidth="2" vectorEffect="non-scaling-stroke" />
         {data.map((d, i) => {
           const x = (i / (data.length - 1)) * 100;
           const y = 100 - (d.value / max) * 100;
-          return <circle key={i} cx={x} cy={y} r="2" fill="#EC4899" />;
+          return <circle key={i} cx={x} cy={y} r="2" className="fill-primary-500 dark:fill-primary-300" />;
         })}
       </svg>
       <div className="flex justify-between text-xs text-neutral-400 mt-1">

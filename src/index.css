@@ -2,54 +2,83 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---- FemCare+ theme variables (RGB triplets so Tailwind opacity modifiers work) ---- */
+:root {
+  --bg: 255 250 247;
+  --card: 255 255 255;
+  --ink: 73 56 79;
+  --ink-muted: 125 110 130;
+  --line: 228 219 241;
+  --hero-from: 244 220 229;
+  --hero-via: 243 237 249;
+  --hero-to: 228 219 241;
+  color-scheme: light;
+}
+.dark {
+  --bg: 26 21 25;
+  --card: 37 30 37;
+  --ink: 243 238 245;
+  --ink-muted: 185 171 189;
+  --line: 66 54 68;
+  --hero-from: 66 44 58;
+  --hero-via: 52 40 60;
+  --hero-to: 44 37 62;
+  color-scheme: dark;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-neutral-100 text-neutral-900 font-sans antialiased;
+    @apply bg-bg text-ink font-sans antialiased;
     line-height: 1.6;
   }
-  .dark body {
-    @apply bg-neutral-950 text-neutral-100;
-  }
-  h1, h2, h3, h4 {
-    line-height: 1.3;
-  }
+  h1, h2, h3, h4 { line-height: 1.3; }
+  ::placeholder { color: rgb(var(--ink-muted) / 0.7); }
+  input, textarea, select { color: rgb(var(--ink)); }
 }
 
 @layer components {
   .card {
-    @apply bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-md;
+    @apply bg-bg-card rounded-2xl border border-primary-100/70 dark:border-white/10 shadow-soft;
   }
   .card-soft {
-    @apply bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl border border-neutral-200/70 dark:border-neutral-700/60;
+    @apply bg-secondary-50 dark:bg-white/5 rounded-2xl border border-secondary-300/50 dark:border-white/10;
   }
   .btn-primary {
-    @apply bg-primary-500 text-white rounded-xl px-5 py-3 font-medium transition-all hover:bg-primary-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-md;
+    @apply bg-primary-500 text-ink-onlight rounded-xl px-5 py-3 font-medium transition-colors hover:bg-primary-400 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-soft;
   }
   .btn-secondary {
-    @apply bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-xl px-5 py-3 font-medium transition-all hover:bg-primary-100 dark:hover:bg-primary-900/50 active:scale-[0.98];
+    @apply bg-primary-100 text-primary-800 dark:bg-primary-900/50 dark:text-primary-200 rounded-xl px-5 py-3 font-medium transition-colors hover:bg-primary-200 dark:hover:bg-primary-900/70 active:scale-[0.98];
+  }
+  .btn-outline {
+    @apply border border-primary-300 dark:border-primary-700 text-primary-800 dark:text-primary-200 rounded-xl px-4 py-2 font-medium transition-colors hover:bg-primary-50 dark:hover:bg-white/5;
   }
   .btn-ghost {
-    @apply text-neutral-600 dark:text-neutral-300 rounded-xl px-5 py-3 font-medium transition-all hover:bg-neutral-100 dark:hover:bg-neutral-700 active:scale-[0.98];
+    @apply text-ink-muted rounded-xl px-5 py-3 font-medium transition-colors hover:bg-primary-50 dark:hover:bg-white/5 active:scale-[0.98];
   }
   .btn-danger {
-    @apply bg-error-500 text-white rounded-xl px-5 py-3 font-medium transition-all hover:bg-error-600 active:scale-[0.98] shadow-md;
+    @apply bg-error-600 text-white rounded-xl px-5 py-3 font-medium transition-colors hover:bg-error-500 active:scale-[0.98] shadow-soft;
   }
   .input-field {
-    @apply w-full bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-3 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all;
+    @apply w-full bg-bg-card border border-primary-200 dark:border-white/15 rounded-xl px-4 py-3 text-ink placeholder:text-ink-muted/70 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all;
   }
   .label-text {
-    @apply block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1.5;
+    @apply block text-sm font-medium text-ink mb-1.5;
   }
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all cursor-pointer select-none;
   }
   .section-title {
-    @apply text-lg font-serif font-semibold text-neutral-900 dark:text-neutral-100;
+    @apply text-xl font-serif font-medium tracking-tight text-ink;
   }
+}
+
+.hero-surface {
+  background: linear-gradient(135deg, rgb(var(--hero-from)) 0%, rgb(var(--hero-via)) 55%, rgb(var(--hero-to)) 100%);
 }
 
 /* Leaflet overrides */
@@ -58,28 +87,14 @@
   border-radius: 1rem;
   z-index: 0;
 }
-.leaflet-popup-content-wrapper {
-  border-radius: 0.75rem;
-}
-.dark .leaflet-tile-pane {
-  filter: brightness(0.85) contrast(0.9);
-}
+.leaflet-popup-content-wrapper { border-radius: 0.75rem; }
+.dark .leaflet-tile-pane { filter: brightness(0.85) contrast(0.9); }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(236, 72, 153, 0.25);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(236, 72, 153, 0.45);
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(184, 161, 217, 0.35); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(184, 161, 217, 0.6); }
 
 /* Range slider */
 input[type='range'] {
@@ -87,11 +102,8 @@ input[type='range'] {
   appearance: none;
   height: 6px;
   border-radius: 3px;
-  background: #FCE7F3;
+  background: rgb(var(--line));
   outline: none;
-}
-.dark input[type='range'] {
-  background: #831843;
 }
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -99,56 +111,19 @@ input[type='range']::-webkit-slider-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #EC4899;
+  background: #B8A1D9;
   cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3);
+  border: 3px solid rgb(var(--card));
+  box-shadow: 0 2px 6px rgba(73, 56, 79, 0.25);
 }
 input[type='range']::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #EC4899;
+  background: #B8A1D9;
   cursor: pointer;
-  border: 3px solid white;
-  box-shadow: 0 2px 6px rgba(236, 72, 153, 0.3);
-}
-
-
-/* ---- FemCare+ soft theme ---- */
-@layer components {
-  .card {
-    @apply bg-bg-card dark:bg-bg-card-dark rounded-2xl border border-primary-100/70 dark:border-neutral-700/60 shadow-soft;
-  }
-  .card-soft {
-    @apply bg-secondary-50 dark:bg-neutral-800/60 rounded-2xl border border-secondary-300/50 dark:border-neutral-700/60;
-  }
-  .btn-primary {
-    @apply bg-primary-500 text-white rounded-xl px-5 py-3 font-medium transition-all hover:bg-primary-600 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-soft;
-  }
-  .section-title {
-    @apply text-xl font-serif font-medium tracking-tight text-ink dark:text-neutral-100;
-  }
-}
-
-body {
-  background: linear-gradient(180deg, #fbf8f3 0%, #f7f2f4 100%);
-}
-.dark body {
-  background: linear-gradient(180deg, #1f1b1d 0%, #241f22 100%);
-}
-
-/* ---- Botanical theme: final overrides ---- */
-body {
-  background: #FFFAF7;
-  color: #49384F;
-}
-.dark body {
-  background: #1d181d;
-  color: #f3eef5;
-}
-.btn-primary {
-  @apply bg-primary-500 text-ink hover:bg-primary-600 hover:text-white shadow-soft;
+  border: 3px solid rgb(var(--card));
+  box-shadow: 0 2px 6px rgba(73, 56, 79, 0.25);
 }
 
 /* Chat Markdown: keeps tables and lists readable inside message bubbles */
@@ -161,5 +136,5 @@ body {
 .chat-markdown strong { font-weight: 600; }
 .chat-markdown h1, .chat-markdown h2, .chat-markdown h3 { font-family: Fraunces, Georgia, serif; font-size: 0.95rem; margin: 0.5rem 0 0.25rem; }
 .chat-markdown table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 0.75rem; margin: 0.5rem 0; }
-.chat-markdown th, .chat-markdown td { border: 1px solid #e4dbf1; padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
-.chat-markdown th { background: #f2edf9; font-weight: 600; }
+.chat-markdown th, .chat-markdown td { border: 1px solid rgb(var(--line)); padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
+.chat-markdown th { background: rgb(var(--line) / 0.5); font-weight: 600; }

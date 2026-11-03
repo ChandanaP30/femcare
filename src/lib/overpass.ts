@@ -31,7 +31,7 @@ export const NEARBY_USER_AGENT = 'FemCarePlus/1.0 (Android app; nearby pharmacie
 const SERVER_TIMEOUT_S = 25; // Overpass stops the query after this many seconds
 const CLIENT_TIMEOUT_MS = 35000; // the app waits a little longer than the server
 const TOTAL_BUDGET_MS = 40000; // give up after this long (saved results are shown if there are any)
-const HEDGE_DELAY_MS = 4000; // if a server has not answered after this long, ask the next one too
+const HEDGE_DELAY_MS = 2000; // if a server has not answered after this long, ask the next one too
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 // When every server is overloaded ("at capacity"), wait a few seconds and go through the list once more.
@@ -59,7 +59,8 @@ export const FILTER_CONFIG: Record<PlaceFilter, { label: string; queries: string
   },
   sanitary: {
     label: 'Sanitary Products',
-    queries: ['["shop"="convenience"]', '["shop"="supermarket"]', '["shop"="variety_store"]'],
+    // one clause for the three shop types: fewer searches on the server, same result
+    queries: ['["shop"~"^(convenience|supermarket|variety_store)$"]'],
   },
 };
 
@@ -233,6 +234,11 @@ function withDistances(parsed: ParsedPlace[], lat: number, lon: number): NearbyP
   return parsed
     .map((p) => ({ ...p, distance: haversineDistance(lat, lon, p.lat, p.lon), open: null as boolean | null }))
     .sort((a, b) => a.distance - b.distance);
+}
+
+/** Distance between two points in kilometres. */
+export function distanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  return haversineDistance(lat1, lon1, lat2, lon2);
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -558,6 +564,7 @@ function runSearch(query: string): Promise<ParsedPlace[]> {
         .then(({ res, parsed }) => {
           if (settled) return;
           attempts.push({ endpoint, outcome: 'ok', status: res.status, ms: Date.now() - t0 });
+          console.info('[nearby] ok', endpoint, `${Date.now() - started} ms total`, `${parsed.length} places`);
           finish(() => resolve(parsed));
         })
         .catch((err: unknown) => {

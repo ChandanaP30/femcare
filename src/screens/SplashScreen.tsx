@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Droplet } from 'lucide-react';
 
 export function SplashScreen({ onDone }: { onDone: () => void }) {
   const [show, setShow] = useState(false);
@@ -19,14 +18,19 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
         <div className={`transition-all duration-700 ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
           <div className="flex flex-col items-center gap-6">
             <div className="relative">
-              <div className="absolute inset-0 rounded-3xl bg-primary-400/20 animate-pulse-soft" style={{ width: 80, height: 80 }} />
-              <div className="relative flex items-center justify-center rounded-3xl bg-gradient-to-br from-primary-400 to-accent-500 text-white shadow-xl" style={{ width: 80, height: 80 }}>
-                <Droplet size={44} fill="currentColor" />
-              </div>
+              <div className="absolute inset-0 rounded-[28px] bg-primary-400/20 animate-pulse-soft" style={{ width: 112, height: 112 }} />
+              <img
+                src={`${import.meta.env.BASE_URL}app-icon.png`}
+                alt="FemCare+"
+                width={112}
+                height={112}
+                className="relative rounded-[28px] shadow-xl"
+                style={{ width: 112, height: 112 }}
+              />
             </div>
             <div className="text-center">
               <h1 className="font-serif text-4xl font-bold text-neutral-900 dark:text-neutral-100">
-                FemCare<span className="text-accent-500">+</span>
+                FemCare<span className="text-accent-500 dark:text-accent-300">+</span>
               </h1>
               <p className="mt-2 text-neutral-500 dark:text-neutral-400 text-base font-medium">
                 Understand your cycle. Care for yourself.

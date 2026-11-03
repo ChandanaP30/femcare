@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Logo } from '@/components/Logo';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { CalendarHeart, Brain, Siren, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const slides = [
@@ -40,6 +41,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           Skip
         </button>
       </header>
+      <div className="px-6 pt-2"><LanguagePicker /></div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 max-w-md mx-auto w-full">
         <div key={step} className="animate-slide-up flex flex-col items-center text-center gap-8">

@@ -37,3 +37,7 @@ android/**/build/
 *.patch
 *.backup
 *.backup-*
+
+# Generated and cached files
+android/app/src/main/assets/public/
+supabase/.temp/

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { findNearbyPlaces, getCurrentPosition, getSearchInfo, getSavedPlaces, describeAttempts, NearbySearchError, FILTER_CONFIG, type NearbyErrorKind, type PlaceFilter } from '@/lib/overpass';
+import { findNearbyPlaces, getCurrentPosition, getSearchInfo, getSavedPlaces, distanceKm, describeAttempts, NearbySearchError, FILTER_CONFIG, type NearbyErrorKind, type PlaceFilter } from '@/lib/overpass';
 import type { NearbyPlace } from '@/lib/types';
 import { MapPin, Navigation, Phone, RefreshCw, AlertCircle, Loader2, List, Map as MapIcon, Search } from 'lucide-react';
 import L from 'leaflet';
@@ -8,6 +8,31 @@ import { useLanguage } from '@/lib/language-context';
 import type { TranslationKey } from '@/lib/i18n';
 
 const RADII = [1, 3, 5, 10];
+
+// The last known position is kept on the phone so the search can start (and saved results can show)
+// before the GPS fix arrives. A fresh GPS position replaces it if you have moved more than 300 m.
+const LAST_POS_KEY = 'femcare_last_position_v1';
+const LAST_POS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+function readLastPosition(): { lat: number; lon: number } | null {
+  try {
+    const raw = localStorage.getItem(LAST_POS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as { lat?: number; lon?: number; at?: number };
+    if (typeof p.lat !== 'number' || typeof p.lon !== 'number' || typeof p.at !== 'number') return null;
+    return Date.now() - p.at < LAST_POS_MAX_AGE_MS ? { lat: p.lat, lon: p.lon } : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastPosition(pos: { lat: number; lon: number }) {
+  try {
+    localStorage.setItem(LAST_POS_KEY, JSON.stringify({ ...pos, at: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
 
 // Each kind of failure gets its own message, so an API problem is never shown as "no results".
 const NEARBY_ERROR_KEYS: Record<NearbyErrorKind, TranslationKey> = {
@@ -26,7 +51,7 @@ const FILTERS: PlaceFilter[] = ['pharmacy', 'hospital', 'clinic', 'sanitary'];
 
 export function LocatorScreen() {
   const { t } = useLanguage();
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(readLastPosition);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
   const [loadingLoc, setLoadingLoc] = useState(false);
   const [loadingPlaces, setLoadingPlaces] = useState(false);
@@ -55,7 +80,8 @@ export function LocatorScreen() {
     setLoadingLoc(true);
     try {
       const pos = await getCurrentPosition();
-      setLocation(pos);
+      writeLastPosition(pos);
+      setLocation((prev) => (prev && distanceKm(prev.lat, prev.lon, pos.lat, pos.lon) < 0.3 ? prev : pos));
       setManualLat(pos.lat.toFixed(4));
       setManualLon(pos.lon.toFixed(4));
     } catch (err) {
@@ -135,7 +161,7 @@ export function LocatorScreen() {
 
     // User location marker
     const userIcon = L.divIcon({
-      html: '<div style="width:16px;height:16px;background:#EC4899;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(236,72,153,0.5);"></div>',
+      html: '<div style="width:16px;height:16px;background:#9d86c4;border-radius:50%;border:3px solid white;box-shadow:0 0 8px rgba(157,134,196,0.5);"></div>',
       className: '',
       iconSize: [16, 16],
       iconAnchor: [8, 8],
@@ -189,7 +215,7 @@ export function LocatorScreen() {
       {locError && (
         <div className="card p-4 border-error-200 dark:border-error-800 bg-error-50 dark:bg-error-900/20">
           <div className="flex items-start gap-3">
-            <AlertCircle size={18} className="text-error-500 shrink-0 mt-0.5" />
+            <AlertCircle size={18} className="text-error-500 shrink-0 mt-0.5 dark:text-error-300" />
             <div className="flex-1">
               <p className="text-sm text-error-700 dark:text-error-300">{locError}</p>
               <div className="mt-3 space-y-2">
@@ -198,11 +224,11 @@ export function LocatorScreen() {
                 </button>
                 <div className="flex items-end gap-2">
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">{t('latitude')}</label>
+                    <label className="block text-xs text-neutral-500 mb-1 dark:text-neutral-400">{t('latitude')}</label>
                     <input type="text" value={manualLat} onChange={(e) => setManualLat(e.target.value)} placeholder="lat" className="input-field !py-2 text-sm w-28" />
                   </div>
                   <div>
-                    <label className="block text-xs text-neutral-500 mb-1">{t('longitude')}</label>
+                    <label className="block text-xs text-neutral-500 mb-1 dark:text-neutral-400">{t('longitude')}</label>
                     <input type="text" value={manualLon} onChange={(e) => setManualLon(e.target.value)} placeholder="lon" className="input-field !py-2 text-sm w-28" />
                   </div>
                   <button onClick={handleManualSearch} className="btn-primary !py-2 text-sm flex items-center gap-1">
@@ -270,7 +296,7 @@ export function LocatorScreen() {
             </div>
           ) : placesError ? (
             <div className="card p-6 text-center">
-              <AlertCircle size={24} className="text-error-500 mx-auto mb-2" />
+              <AlertCircle size={24} className="text-error-500 mx-auto mb-2 dark:text-error-300" />
               <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">{placesError}</p>
               {placesDetails && (
                 <pre className="text-[10px] leading-tight text-neutral-400 dark:text-neutral-500 mb-4 whitespace-pre-wrap text-left">{placesDetails}</pre>
@@ -382,9 +408,9 @@ function PlaceCard({ place, t }: { place: NearbyPlace; t: (key: TranslationKey) 
 
 function getMarkerColor(type: string): string {
   switch (type) {
-    case 'pharmacy': return '#8B5CF6';
-    case 'hospital': return '#E65168';
-    case 'clinic': return '#6BAA75';
-    default: return '#EC4899';
+    case 'pharmacy': return '#7d64a6';
+    case 'hospital': return '#b56f76';
+    case 'clinic': return '#6b8b6f';
+    default: return '#c09566';
   }
 }

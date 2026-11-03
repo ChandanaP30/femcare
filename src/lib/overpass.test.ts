@@ -119,7 +119,7 @@ describe('query and endpoints', () => {
   it('searches nodes, ways and relations and asks for center coordinates', () => {
     const q = buildOverpassQuery(LAT, LON, 3000, ['pharmacy', 'sanitary']);
     expect(q).toContain(`nwr(around:3000,${LAT},${LON})["amenity"="pharmacy"];`);
-    expect(q).toContain('["shop"="supermarket"]');
+    expect(q).toContain('["shop"~"^(convenience|supermarket|variety_store)$"]');
     expect(q).not.toContain('node(around');
     expect(q.endsWith('out center tags;')).toBe(true);
     expect(q.startsWith('[out:json][timeout:')).toBe(true);
@@ -403,11 +403,11 @@ describe('slow servers do not hold the search up', () => {
       init.signal!.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
     });
 
-  it('asks the next server after 4 seconds and uses its answer', async () => {
+  it('asks the next server after 2 seconds and uses its answer', async () => {
     vi.useFakeTimers();
     fetchMock.mockImplementationOnce(hang).mockImplementationOnce(async () => ok([node(1, 0.001)]));
     const pending = findNearbyPlaces(LAT, LON, 3, ['pharmacy']);
-    await vi.advanceTimersByTimeAsync(3900);
+    await vi.advanceTimersByTimeAsync(1900);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(200);
     expect((await pending).map((p) => p.id)).toEqual(['node/1']);

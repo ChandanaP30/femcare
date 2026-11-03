@@ -2,9 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import type { EmergencyContact } from '@/lib/types';
-import { MapPin, Pill, Phone, Plus, Trash2, X, MessageSquare, ShieldCheck, ChevronRight, Siren } from 'lucide-react';
+import { MapPin, Pill, Phone, Plus, Trash2, X, MessageSquare, ShieldCheck, Siren } from 'lucide-react';
 import { useLanguage } from '@/lib/language-context';
-import BotanicalAccent from '@/components/BotanicalAccent';
+import { PageHeader } from '@/components/PageHeader';
 
 export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { user } = useAuth();
@@ -56,20 +56,13 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
   }
 
   return (
-    <div className="space-y-6 animate-fade-in pb-8">
-      {/* Header */}
-      <header className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">FemCare+</p>
-          <h1 className="font-serif text-2xl sm:text-3xl text-ink mt-1.5 break-words">{t('sosTitle')}</h1>
-        </div>
-        <BotanicalAccent size={44} className="hidden sm:block shrink-0 text-primary-400" />
-      </header>
+    <div className="space-y-5 pb-8">
+      <PageHeader title={t('sosTitle')} art="sprig" />
 
-      {/* Emergency banner */}
-      <section className="card p-6">
+      {/* Emergency card */}
+      <section className="card p-5">
         <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-error-100 text-error-600">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-error-100 text-error-600 dark:bg-error-600/30 dark:text-error-300">
             <Siren size={22} strokeWidth={1.75} />
           </span>
           <div className="min-w-0">
@@ -80,7 +73,7 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
         <a
           href="tel:112"
           aria-label="Call emergency number 112"
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-error-300 px-5 py-3.5 text-base font-semibold text-ink shadow-soft transition-all hover:bg-error-400 active:scale-[0.98]"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-error-300 px-5 py-3.5 text-base font-semibold text-ink-onlight shadow-soft transition-colors hover:bg-error-400 active:scale-[0.98]"
         >
           <Phone size={18} strokeWidth={2} />
           112
@@ -88,33 +81,30 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
       </section>
 
       {/* Nearby services */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <section className="grid grid-cols-2 gap-3">
         <button
           onClick={() => onNavigate('locator')}
-          className="card flex items-center gap-4 p-4 text-left transition-all hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="card flex flex-col items-start gap-3 p-4 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
             <MapPin size={20} strokeWidth={1.75} />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-ink">{t('findNearbyMedicalStores')}</span>
-            <span className="mt-0.5 block text-xs leading-snug text-ink-muted">{t('findNearbyMedicalStoresDesc')}</span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold leading-snug text-ink">{t('findNearbyMedicalStores')}</span>
+            <span className="mt-1 block text-xs leading-snug text-ink-muted">{t('findNearbyMedicalStoresDesc')}</span>
           </span>
-          <ChevronRight size={18} className="shrink-0 text-ink-muted" />
         </button>
-
         <button
           onClick={() => onNavigate('locator')}
-          className="card flex items-center gap-4 p-4 text-left transition-all hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="card flex flex-col items-start gap-3 p-4 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
         >
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-300 text-ink">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-300 text-ink-onlight dark:bg-accent-600/30 dark:text-accent-300">
             <Pill size={20} strokeWidth={1.75} />
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-ink">{t('findSanitaryProducts')}</span>
-            <span className="mt-0.5 block text-xs leading-snug text-ink-muted">{t('findSanitaryProductsDesc')}</span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold leading-snug text-ink">{t('findSanitaryProducts')}</span>
+            <span className="mt-1 block text-xs leading-snug text-ink-muted">{t('findSanitaryProductsDesc')}</span>
           </span>
-          <ChevronRight size={18} className="shrink-0 text-ink-muted" />
         </button>
       </section>
 
@@ -124,7 +114,7 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
           <h3 className="section-title">{t('emergencyContacts')}</h3>
           <button
             onClick={() => setShowAdd(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary-100 px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-primary-200"
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary-100 px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-primary-200 dark:bg-primary-900/50 dark:hover:bg-primary-900/70"
           >
             <Plus size={16} strokeWidth={2} />
             {t('addContact')}
@@ -137,7 +127,7 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
           </div>
         ) : contacts.length === 0 ? (
           <div className="card flex flex-col items-center p-6 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-200 text-ink-muted">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-200 text-ink-muted dark:bg-accent-600/25">
               <Phone size={20} strokeWidth={1.75} />
             </span>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-ink-muted">{t('noContactsAdded')}</p>
@@ -146,34 +136,34 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
           <div className="space-y-3">
             {contacts.map((c) => (
               <div key={c.id} className="card flex items-center gap-3 p-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 font-serif text-base text-ink">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 font-serif text-base text-ink dark:bg-primary-900/50">
                   {c.name.charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{c.name}</p>
                   <p className="truncate text-xs text-ink-muted">
-                    {c.phone}{c.relationship ? ` · ${c.relationship}` : ''}
+                    {c.phone}{c.relationship ? ` \u00b7 ${c.relationship}` : ''}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
                   <a
                     href={`tel:${c.phone}`}
                     aria-label={`Call ${c.name}`}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-success-200 text-success-700 transition-colors hover:bg-success-300"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-success-200 text-success-700 transition-colors hover:bg-success-300 dark:bg-success-700/30 dark:text-success-300"
                   >
                     <Phone size={16} strokeWidth={1.75} />
                   </a>
                   <a
                     href={`sms:${c.phone}`}
                     aria-label={`Message ${c.name}`}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700 transition-colors hover:bg-primary-200"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100 text-primary-700 transition-colors hover:bg-primary-200 dark:bg-primary-900/50 dark:text-primary-300"
                   >
                     <MessageSquare size={16} strokeWidth={1.75} />
                   </a>
                   <button
                     onClick={() => deleteContact(c.id)}
                     aria-label={`Delete ${c.name}`}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 transition-colors hover:bg-error-100"
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-error-50 text-error-600 transition-colors hover:bg-error-100 dark:bg-error-600/30 dark:text-error-300"
                   >
                     <Trash2 size={16} strokeWidth={1.75} />
                   </button>
@@ -185,22 +175,22 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
       </section>
 
       {/* Safety notice */}
-      <section className="flex items-start gap-3 rounded-2xl border border-success-200 bg-success-50 p-4">
-        <ShieldCheck size={20} strokeWidth={1.75} className="mt-0.5 shrink-0 text-success-700" />
+      <section className="flex items-start gap-3 rounded-2xl border border-success-200 bg-success-50 p-4 dark:border-white/10 dark:bg-success-700/30">
+        <ShieldCheck size={20} strokeWidth={1.75} className="mt-0.5 shrink-0 text-success-700 dark:text-success-300" />
         <p className="text-sm leading-relaxed text-ink">{t('femcareNoAutoSend')}</p>
       </section>
 
       {/* Add contact dialog */}
       {showAdd && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowAdd(false)}>
-          <div className="absolute inset-0 bg-ink/30 backdrop-blur-sm" />
-          <div className="relative card w-full max-w-sm p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowAdd(false)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="card relative w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
             <div className="mb-5 flex items-center justify-between">
               <h3 className="font-serif text-lg text-ink">{t('addContact')}</h3>
               <button
                 onClick={() => setShowAdd(false)}
                 aria-label="Close"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-primary-50 hover:text-ink"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-primary-50 hover:text-ink dark:hover:bg-white/5"
               >
                 <X size={18} />
               </button>

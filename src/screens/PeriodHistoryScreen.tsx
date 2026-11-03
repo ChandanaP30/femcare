@@ -183,7 +183,7 @@ export function PeriodHistoryScreen({ onNavigate }: { onNavigate: (page: string)
       {topSymptoms.length > 0 && (
         <div className="card p-5">
           <h3 className="section-title mb-4 flex items-center gap-2">
-            <Activity size={16} className="text-accent-500" />
+            <Activity size={16} className="text-accent-500 dark:text-accent-300" />
             {t('commonSymptoms')}
           </h3>
           <div className="space-y-2">

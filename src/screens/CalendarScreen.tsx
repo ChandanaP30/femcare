@@ -189,7 +189,7 @@ export function CalendarScreen() {
       <div className="flex flex-wrap gap-3 text-xs">
         <LegendItem icon={Droplet} color="bg-primary-500" label={t('period')} />
         <LegendItem icon={Sparkles} color="bg-primary-200 dark:bg-primary-800" label={t('predicted')} />
-        <LegendItem icon={Heart} color="bg-accent-300" label={t('fertile')} />
+        <LegendItem icon={Heart} color="bg-accent-300 dark:bg-accent-600/25" label={t('fertile')} />
         <LegendItem icon={Egg} color="bg-warning-400" label={t('ovulation')} />
       </div>
 
@@ -232,13 +232,13 @@ export function CalendarScreen() {
                     : ''
                 } ${
                   info.isPeriod
-                    ? 'bg-primary-400 text-ink font-semibold'
+                    ? 'bg-primary-400 text-ink font-semibold dark:text-ink-onlight'
                     : info.isPredicted
-                    ? 'bg-primary-200 text-ink ring-1 ring-primary-400'
+                    ? 'bg-primary-200 text-ink ring-1 ring-primary-400 dark:bg-primary-900/40'
                     : info.isOvulation
-                    ? 'bg-warning-300 text-ink font-semibold'
+                    ? 'bg-warning-300 text-ink font-semibold dark:text-ink-onlight'
                     : info.isFertile
-                    ? 'bg-accent-300 text-ink'
+                    ? 'bg-accent-300 text-ink dark:bg-accent-600/25'
                     : info.isToday
                     ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
                     : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700/50'
@@ -269,7 +269,7 @@ export function CalendarScreen() {
               </div>
               <p className="text-sm text-neutral-600 dark:text-neutral-400">
                 {t('started')} {formatDateShort(selectedPeriod.start_date)}
-          {selectedPeriod.end_date ? ' Ã¢â‚¬Â¢ ' + t('ended') + ' ' + formatDateShort(selectedPeriod.end_date) : ''}
+          {selectedPeriod.end_date ? ' • ' + t('ended') + ' ' + formatDateShort(selectedPeriod.end_date) : ''}
               </p>
               {!selectedPeriod.end_date && selectedDate === todayStr() && (
                 <button onClick={() => endPeriod(selectedPeriod)} className="btn-secondary text-sm w-full">

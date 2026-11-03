@@ -53,38 +53,14 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (page: string) => v
       {/* Notifications */}
       <div>
         <h3 className="section-title mb-3">{t('notifications')}</h3>
-        <div className="card divide-y divide-neutral-200 dark:divide-neutral-700">
-          <ToggleRow
-            label={t('upcomingPeriodReminders')}
-            description={t('getNotifiedBefore')}
-            checked={settings?.period_reminders ?? true}
-            onChange={(v) => updateSettings({ period_reminders: v })}
-          />
-          <ToggleRow
-            label={t('dailyLoggingReminders')}
-            description={t('remindersToLog')}
-            checked={settings?.daily_logging_reminders ?? true}
-            onChange={(v) => updateSettings({ daily_logging_reminders: v })}
-          />
-          <ToggleRow
-            label={t('medicationReminders')}
-            description={t('remindersForMedication')}
-            checked={settings?.medication_reminders ?? false}
-            onChange={(v) => updateSettings({ medication_reminders: v })}
-          />
-          <ToggleRow
-            label={t('hydrationReminders')}
-            description={t('gentleRemindersHydration')}
-            checked={settings?.hydration_reminders ?? false}
-            onChange={(v) => updateSettings({ hydration_reminders: v })}
-          />
-          <ToggleRow
-            label={t('cycleLoggingReminders')}
-            description={t('remindersKeepCycle')}
-            checked={settings?.cycle_logging_reminders ?? true}
-            onChange={(v) => updateSettings({ cycle_logging_reminders: v })}
-          />
-        </div>
+        <button
+          type="button"
+          onClick={() => onNavigate('notifications')}
+          className="card flex w-full items-center justify-between p-4 text-left transition-all hover:shadow-md"
+        >
+          <span className="text-sm font-medium text-ink">{t('notifications')}</span>
+          <span className="text-xs text-ink-muted">Manage reminders</span>
+        </button>
       </div>
 
       {/* Appearance */}
@@ -130,7 +106,7 @@ export function SettingsScreen({ onNavigate }: { onNavigate: (page: string) => v
             onClick={() => onNavigate('privacy')}
             className="card p-4 flex items-center gap-3 w-full text-left hover:shadow-md transition-all"
           >
-            <Trash2 size={20} className="text-error-500" />
+            <Trash2 size={20} className="text-error-500 dark:text-error-300" />
             <span className="text-sm font-medium text-error-600 dark:text-error-400 flex-1">{t('deleteAccountOrData')}</span>
             <ChevronRight size={18} className="text-neutral-400" />
           </button>
@@ -155,7 +131,7 @@ function ToggleRow({ label, description, checked, onChange }: { label: string; d
         onClick={() => onChange(!checked)}
         className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${checked ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}
       >
-        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : ''}`} />
+        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform dark:bg-neutral-800 ${checked ? 'translate-x-5' : ''}`} />
       </button>
     </div>
   );

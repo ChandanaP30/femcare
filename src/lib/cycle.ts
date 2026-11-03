@@ -60,15 +60,16 @@ interface CycleInterval {
 }
 
 function extractCycleIntervals(periods: Period[]): CycleInterval[] {
+  periods = periods.filter((p) => parseDate(p.start_date) !== null); // ignore unparseable starts
   const sorted = [...periods].sort(
     (a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
   );
   const intervals: CycleInterval[] = [];
 
   for (let i = 0; i < sorted.length; i++) {
-    const dur = sorted[i].end_date
-      ? daysBetween(parseDate(sorted[i].start_date)!, parseDate(sorted[i].end_date)!) + 1
-      : null;
+    const startD = parseDate(sorted[i].start_date);
+    const endD = parseDate(sorted[i].end_date);
+    const dur = startD && endD ? daysBetween(startD, endD) + 1 : null;
 
     if (i < sorted.length - 1) {
       const nextStart = parseDate(sorted[i + 1].start_date)!;
@@ -127,6 +128,13 @@ export interface PredictionModel {
   sampleSize: number;
 }
 
+// Cycles and periods outside these ranges are treated as missed or duplicate logs for prediction.
+const PREDICT_CYCLE_MIN = 15;
+const PREDICT_CYCLE_MAX = 60;
+const PREDICT_PERIOD_MIN = 1;
+const PREDICT_PERIOD_MAX = 10;
+const MAX_TREND_ADJUST = 2; // days
+
 export function buildPredictionModel(
   profile: Pick<Profile, 'cycle_length' | 'period_duration'>,
   periods: Period[]
@@ -134,36 +142,31 @@ export function buildPredictionModel(
   const intervals = extractCycleIntervals(periods);
   const cycleLengths = intervals
     .map((i) => i.cycleLength)
-    .filter((v): v is number => v !== null);
+    .filter((v): v is number => v !== null && v >= PREDICT_CYCLE_MIN && v <= PREDICT_CYCLE_MAX);
   const periodDurations = intervals
     .map((i) => i.periodDuration)
-    .filter((v): v is number => v !== null);
+    .filter((v): v is number => v !== null && v >= PREDICT_PERIOD_MIN && v <= PREDICT_PERIOD_MAX);
 
-  // ── Cycle length prediction ──
+  // Cycle length
   let predictedCycleLength: number;
   let trendDirection: 'stable' | 'shortening' | 'lengthening' = 'stable';
 
   if (cycleLengths.length >= 2) {
-    // Exponential weighted moving average — recent cycles matter more
     predictedCycleLength = exponentialWeightedAverage(cycleLengths, 0.35);
-
-    // Linear regression slope for trend detection
     const slope = linearRegressionSlope(cycleLengths);
     if (slope < -0.5) trendDirection = 'shortening';
     else if (slope > 0.5) trendDirection = 'lengthening';
-
-    // Apply trend correction: blend EWMA with a small slope projection
-    predictedCycleLength += slope * 0.3;
+    // Small, capped correction so one unusual cycle cannot swing the estimate.
+    const adjust = Math.max(-MAX_TREND_ADJUST, Math.min(MAX_TREND_ADJUST, slope * 0.3));
+    predictedCycleLength += adjust;
   } else if (cycleLengths.length === 1) {
     predictedCycleLength = cycleLengths[0];
   } else {
     predictedCycleLength = profile.cycle_length || 28;
   }
-
-  // Clamp to a reasonable range
   predictedCycleLength = Math.round(Math.min(45, Math.max(21, predictedCycleLength)));
 
-  // ── Period duration prediction ──
+  // Period duration
   let predictedPeriodDuration: number;
   if (periodDurations.length >= 2) {
     predictedPeriodDuration = exponentialWeightedAverage(periodDurations, 0.4);
@@ -174,11 +177,10 @@ export function buildPredictionModel(
   }
   predictedPeriodDuration = Math.round(Math.min(10, Math.max(2, predictedPeriodDuration)));
 
-  // ── Regularity score (0-100) ──
+  // Regularity (0-100): SD of 0 gives 100, SD of 7 or more gives 0
   let regularityScore: number;
   if (cycleLengths.length >= 3) {
     const sd = standardDeviation(cycleLengths);
-    // SD of 0 → 100, SD of 7+ → 0
     regularityScore = Math.round(Math.max(0, Math.min(100, 100 - (sd / 7) * 100)));
   } else if (cycleLengths.length === 2) {
     const diff = Math.abs(cycleLengths[0] - cycleLengths[1]);
@@ -187,8 +189,7 @@ export function buildPredictionModel(
     regularityScore = 50;
   }
 
-  // ── Confidence score (0-100) ──
-  // More data → higher confidence. Regularity also boosts confidence.
+  // Confidence (0-100): sample size plus regularity. This is data quality, not clinical certainty.
   const sampleSize = cycleLengths.length;
   let sampleConfidence = Math.min(100, (sampleSize / 6) * 100);
   if (sampleSize === 0) sampleConfidence = 15;
@@ -205,8 +206,45 @@ export function buildPredictionModel(
   };
 }
 
-// Ovulation is anchored to the NEXT period: it typically occurs about 14 days before it
-// (luteal phase length is relatively constant, the follicular phase varies).
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+// Most recent logged start that is not in the future. Falls back to the profile's last period date.
+function lastLoggedStart(
+  profile: Pick<Profile, 'last_period_date'>,
+  periods: Period[]
+): Date | null {
+  const limit = addDays(startOfToday(), 1);
+  const starts = periods
+    .map((p) => parseDate(p.start_date))
+    .filter((d): d is Date => d !== null && d <= limit);
+  if (starts.length > 0) {
+    return starts.reduce((latest, d) => (d > latest ? d : latest));
+  }
+  return profile.last_period_date ? parseDate(profile.last_period_date) : null;
+}
+
+// Locates today within the cycle. If the expected start has passed without a log,
+// the estimate moves to the next expected start instead of staying in the past.
+interface CyclePosition {
+  cycleStart: Date;
+  nextStart: Date;
+  cycleDay: number;
+}
+
+function locateCycle(lastStart: Date, cycleLength: number, today: Date): CyclePosition {
+  const days = daysBetween(lastStart, today);
+  const index = days <= 0 ? 0 : Math.floor((days - 1) / cycleLength);
+  const cycleStart = addDays(lastStart, index * cycleLength);
+  const nextStart = addDays(cycleStart, cycleLength);
+  const cycleDay = Math.min(cycleLength, Math.max(1, daysBetween(cycleStart, today) + 1));
+  return { cycleStart, nextStart, cycleDay };
+}
+
+// Ovulation is anchored to the NEXT period: about 14 days before it (luteal phase is relatively constant).
 // This is an estimate, not a clinical measurement.
 export const LUTEAL_PHASE_DAYS = 14;
 
@@ -245,46 +283,31 @@ export function computeCycleInfo(
   profile: Pick<Profile, 'last_period_date' | 'cycle_length' | 'period_duration'>,
   periods: Period[]
 ): CycleInfo | null {
-  const sortedPeriods = [...periods].sort(
-    (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-  );
-
-  let lastStart: Date | null = null;
-
-  if (sortedPeriods.length > 0) {
-    lastStart = parseDate(sortedPeriods[0].start_date);
-  } else if (profile.last_period_date) {
-    lastStart = parseDate(profile.last_period_date);
-  }
-
+  const lastStart = lastLoggedStart(profile, periods);
   if (!lastStart) return null;
 
   const model = buildPredictionModel(profile, periods);
   const cycleLength = model.predictedCycleLength;
   const periodDuration = model.predictedPeriodDuration;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = startOfToday();
+  const pos = locateCycle(lastStart, cycleLength, today);
 
-  const currentDay = daysBetween(lastStart, today) + 1;
-  const nextPeriodDate = addDays(lastStart, cycleLength);
-  const daysUntilNextPeriod = daysBetween(today, nextPeriodDate);
-  const ovulationDate = addDays(lastStart, ovulationOffset(cycleLength));
+  const daysUntilNextPeriod = daysBetween(today, pos.nextStart);
+  const ovulationDate = addDays(pos.cycleStart, ovulationOffset(cycleLength));
   const fertileWindowStart = addDays(ovulationDate, -4);
   const fertileWindowEnd = addDays(ovulationDate, 1);
 
-  const isOnPeriod = currentDay <= periodDuration;
-
   return {
-    currentDay: Math.max(1, currentDay),
-    phase: getPhase(currentDay, periodDuration, cycleLength),
-    nextPeriodDate: toDateStr(nextPeriodDate),
+    currentDay: pos.cycleDay,
+    phase: getPhase(pos.cycleDay, periodDuration, cycleLength),
+    nextPeriodDate: toDateStr(pos.nextStart),
     fertileWindowStart: toDateStr(fertileWindowStart),
     fertileWindowEnd: toDateStr(fertileWindowEnd),
     ovulationDate: toDateStr(ovulationDate),
     cycleLength,
     periodDuration,
     daysUntilNextPeriod,
-    isOnPeriod,
+    isOnPeriod: pos.cycleDay <= periodDuration,
     confidence: model.confidence,
     predictedCycleLength: model.predictedCycleLength,
     predictedPeriodDuration: model.predictedPeriodDuration,
@@ -298,31 +321,19 @@ export function getPredictedPeriodDates(
   periods: Period[],
   monthsAhead: number = 3
 ): { start: string; end: string }[] {
-  const sortedPeriods = [...periods].sort(
-    (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-  );
-
-  let lastStart: Date | null = null;
-  if (sortedPeriods.length > 0) {
-    lastStart = parseDate(sortedPeriods[0].start_date);
-  } else if (profile.last_period_date) {
-    lastStart = parseDate(profile.last_period_date);
-  }
-
+  const lastStart = lastLoggedStart(profile, periods);
   if (!lastStart) return [];
 
   const model = buildPredictionModel(profile, periods);
   const cycleLength = model.predictedCycleLength;
   const periodDuration = model.predictedPeriodDuration;
+  const pos = locateCycle(lastStart, cycleLength, startOfToday());
   const results: { start: string; end: string }[] = [];
 
-  for (let i = 1; i <= monthsAhead; i++) {
-    const start = addDays(lastStart, cycleLength * i);
+  for (let i = 0; i < monthsAhead; i++) {
+    const start = addDays(pos.nextStart, i * cycleLength);
     const end = addDays(start, periodDuration - 1);
-    results.push({
-      start: toDateStr(start),
-      end: toDateStr(end),
-    });
+    results.push({ start: toDateStr(start), end: toDateStr(end) });
   }
 
   return results;
@@ -333,25 +344,16 @@ export function getFertileWindows(
   periods: Period[],
   monthsAhead: number = 3
 ): { start: string; end: string; ovulation: string }[] {
-  const sortedPeriods = [...periods].sort(
-    (a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
-  );
-
-  let lastStart: Date | null = null;
-  if (sortedPeriods.length > 0) {
-    lastStart = parseDate(sortedPeriods[0].start_date);
-  } else if (profile.last_period_date) {
-    lastStart = parseDate(profile.last_period_date);
-  }
-
+  const lastStart = lastLoggedStart(profile, periods);
   if (!lastStart) return [];
 
   const model = buildPredictionModel(profile, periods);
   const cycleLength = model.predictedCycleLength;
+  const pos = locateCycle(lastStart, cycleLength, startOfToday());
   const results: { start: string; end: string; ovulation: string }[] = [];
 
   for (let i = 0; i < monthsAhead; i++) {
-    const cycleStart = addDays(lastStart, cycleLength * i);
+    const cycleStart = addDays(pos.cycleStart, i * cycleLength);
     const ovulation = addDays(cycleStart, ovulationOffset(cycleLength));
     results.push({
       start: toDateStr(addDays(ovulation, -4)),

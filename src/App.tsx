@@ -25,6 +25,12 @@ import { AboutScreen } from '@/screens/AboutScreen';
 import { PeriodLeaveGuide } from '@/screens/PeriodLeaveGuide';
 import { PeriodLogScreen } from '@/screens/PeriodLogScreen';
 import { PeriodHistoryScreen } from '@/screens/PeriodHistoryScreen';
+import { NotificationSettingsScreen } from '@/screens/NotificationSettingsScreen';
+import { ReminderSync } from '@/lib/reminder-sync';
+import { cancelAllReminders } from '@/lib/reminders';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { HealthReportScreen } from '@/screens/HealthReportScreen';
 import type { NavKey } from '@/components/nav-items';
 
 type AppPage =
@@ -38,7 +44,9 @@ type AppPage =
   | 'settings'
   | 'privacy'
   | 'about'
-  | 'leave-guide';
+  | 'leave-guide'
+  | 'report'
+  | 'notifications';
 
 const NAV_KEYS: NavKey[] = ['home', 'calendar', 'insights', 'sos', 'profile'];
 
@@ -73,6 +81,20 @@ function AppContent() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
+  // Tap on a notification opens the screen it points to, only when signed in and set up.
+  const routeRef = useRef<(page: AppPage) => void>(() => {});
+  const readyRef = useRef(false);
+  routeRef.current = (page: AppPage) => navigateTo(page);
+  readyRef.current = !!user && !!profile?.onboarding_completed;
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const handle = LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+      const route = (event.notification.extra as { route?: string } | undefined)?.route;
+      if (route && readyRef.current) routeRef.current(route as AppPage);
+    });
+    return () => { handle.then((h) => h.remove()); };
+  }, []);
   function handleSplashDone() {
     setShowSplash(false);
     if (!localStorage.getItem('femcare_onboarding_seen')) {
@@ -118,6 +140,7 @@ function AppContent() {
 
   function handleSignOut() {
     backStackRef.current = [];
+    cancelAllReminders();
     signOut();
     goHome();
   }
@@ -173,6 +196,10 @@ function AppContent() {
         return <PrivacyScreen onSignedOut={handleSignOut} />;
       case 'about':
         return <AboutScreen />;
+      case 'report':
+        return <HealthReportScreen />;
+      case 'notifications':
+        return <NotificationSettingsScreen />;
       case 'leave-guide':
         return <PeriodLeaveGuide />;
       default:
@@ -192,6 +219,7 @@ function AppContent() {
         showBack={showBack}
         onBack={goBack}
       >
+        <ReminderSync />
         {renderPage()}
       </AppShell>
     </SettingsProvider>

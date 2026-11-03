@@ -11,7 +11,7 @@ export function AboutScreen() {
           <Droplet size={44} fill="currentColor" />
         </div>
         <h1 className="font-serif text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-          FemCare<span className="text-accent-500">+</span>
+          FemCare<span className="text-accent-500 dark:text-accent-300">+</span>
         </h1>
         <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-2">{t('aboutTagline')}</p>
         <p className="text-xs text-neutral-400 mt-1">{t('version')}</p>

@@ -107,7 +107,7 @@ export function PeriodLeaveGuide() {
 
       {/* Info banner */}
       <div className="card-soft p-4 flex items-start gap-3">
-        <Sparkles size={18} className="text-accent-500 shrink-0 mt-0.5" />
+        <Sparkles size={18} className="text-accent-500 shrink-0 mt-0.5 dark:text-accent-300" />
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           All policies below are verified against official government sources. Always confirm with your HR department or institution, as employer-specific policies may differ.
         </p>

@@ -97,7 +97,7 @@ export function PrivacyScreen({ onSignedOut }: { onSignedOut: () => void }) {
             disabled={deleting}
             className="card p-4 flex items-center gap-3 w-full text-left hover:shadow-md transition-all"
           >
-            <Trash2 size={20} className="text-warning-500 shrink-0" />
+            <Trash2 size={20} className="text-warning-500 shrink-0 dark:text-warning-300" />
             <div className="flex-1">
               <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t('deleteHealthRecords')}</p>
               <p className="text-xs text-neutral-400 mt-0.5">{t('deleteHealthRecordsDesc')}</p>
@@ -108,7 +108,7 @@ export function PrivacyScreen({ onSignedOut }: { onSignedOut: () => void }) {
             onClick={() => setConfirmDelete(true)}
             className="card p-4 flex items-center gap-3 w-full text-left hover:shadow-md transition-all border-error-200 dark:border-error-800"
           >
-            <AlertTriangle size={20} className="text-error-500 shrink-0" />
+            <AlertTriangle size={20} className="text-error-500 shrink-0 dark:text-error-300" />
             <div className="flex-1">
               <p className="text-sm font-medium text-error-600 dark:text-error-400">{t('deleteAccountTitle')}</p>
               <p className="text-xs text-neutral-400 mt-0.5">{t('deleteAccountDesc')}</p>
@@ -123,7 +123,7 @@ export function PrivacyScreen({ onSignedOut }: { onSignedOut: () => void }) {
           <div className="relative card p-6 max-w-sm w-full animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle size={20} className="text-error-500" />
+                <AlertTriangle size={20} className="text-error-500 dark:text-error-300" />
                 <h3 className="font-serif text-lg font-semibold text-neutral-900 dark:text-neutral-100">{t('deleteAccountConfirmTitle')}</h3>
               </div>
               <button onClick={() => setConfirmDelete(false)} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200">

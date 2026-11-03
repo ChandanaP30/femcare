@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { EDUCATION_ARTICLES, EDUCATION_CATEGORIES, type EducationArticle } from '@/lib/education';
 import { ChevronRight, ArrowLeft, BookOpen, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/lib/language-context';
+import { PageHeader, HeaderArt } from '@/components/PageHeader';
 
 export function EducationScreen() {
   const { t } = useLanguage();
@@ -10,28 +11,33 @@ export function EducationScreen() {
 
   if (selectedArticle) {
     return (
-      <div className="space-y-5 animate-fade-in">
+      <div className="space-y-5 pb-8">
         <button
           onClick={() => setSelectedArticle(null)}
-          className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200 transition-colors"
+          className="inline-flex items-center gap-2 rounded-full bg-primary-100 px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-primary-200 dark:bg-primary-900/50 dark:hover:bg-primary-900/70"
         >
           <ArrowLeft size={16} /> {t('backToArticles')}
         </button>
 
-        <div>
-          <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">{selectedArticle.category}</span>
-          <h1 className="font-serif text-2xl font-bold text-neutral-900 dark:text-neutral-100 mt-1">{selectedArticle.title}</h1>
-          <p className="text-neutral-600 dark:text-neutral-400 text-sm mt-2 leading-relaxed">{selectedArticle.summary}</p>
-        </div>
+        <section className="hero-surface relative overflow-hidden rounded-3xl border border-white/60 p-5 shadow-soft dark:border-white/10">
+          <HeaderArt art="leaves" className="pointer-events-none absolute -right-3 -top-2 h-24 w-24 opacity-90" />
+          <div className="relative pr-16">
+            <span className="inline-flex rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-primary-800 dark:bg-white/10 dark:text-primary-200">
+              {selectedArticle.category}
+            </span>
+            <h1 className="mt-2 break-words font-serif text-2xl text-ink">{selectedArticle.title}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{selectedArticle.summary}</p>
+          </div>
+        </section>
 
-        <div className="card p-5 space-y-4">
+        <section className="card space-y-4 p-5">
           {selectedArticle.content.map((para, i) => (
-            <p key={i} className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">{para}</p>
+            <p key={i} className="text-sm leading-7 text-ink">{para}</p>
           ))}
-        </div>
+        </section>
 
         {selectedArticle.references.length > 0 && (
-          <div>
+          <section>
             <h3 className="section-title mb-2">{t('references')}</h3>
             <div className="space-y-2">
               {selectedArticle.references.map((ref, i) => (
@@ -40,20 +46,18 @@ export function EducationScreen() {
                   href={ref.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="card p-3 flex items-center justify-between hover:shadow-md transition-all"
+                  className="card flex items-center justify-between p-3 transition-shadow hover:shadow-lift"
                 >
-                  <span className="text-sm text-primary-600 dark:text-primary-400 font-medium truncate">{ref.label}</span>
-                  <ExternalLink size={16} className="text-neutral-400 shrink-0 ml-2" />
+                  <span className="truncate text-sm font-medium text-primary-700 dark:text-primary-300">{ref.label}</span>
+                  <ExternalLink size={16} className="ml-2 shrink-0 text-ink-muted" />
                 </a>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         <div className="card-soft p-4">
-          <p className="text-xs text-neutral-600 dark:text-neutral-400">
-            {t('educationDisclaimer')}
-          </p>
+          <p className="text-xs leading-relaxed text-ink-muted">{t('educationDisclaimer')}</p>
         </div>
       </div>
     );
@@ -63,17 +67,16 @@ export function EducationScreen() {
     ? EDUCATION_ARTICLES.filter((a) => a.category === selectedCategory)
     : EDUCATION_ARTICLES;
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="font-serif text-2xl font-bold text-neutral-900 dark:text-neutral-100">{t('healthEducation')}</h1>
-        <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">{t('healthEducationSubtitle')}</p>
-      </div>
+  const chipOff = 'bg-bg-card text-ink-muted ring-1 ring-primary-100 dark:ring-white/15';
 
-      <div className="flex flex-wrap gap-2">
+  return (
+    <div className="space-y-5 pb-8">
+      <PageHeader title={t('healthEducation')} subtitle={t('healthEducationSubtitle')} art="leaves" />
+
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         <button
           onClick={() => setSelectedCategory(null)}
-          className={`chip text-xs ${!selectedCategory ? 'bg-primary-500 text-white' : 'bg-neutral-100 dark:bg-neutral-700/50 text-neutral-600 dark:text-neutral-300'}`}
+          className={`chip shrink-0 whitespace-nowrap text-xs ${!selectedCategory ? 'bg-primary-500 text-ink-onlight' : chipOff}`}
         >
           {t('all')}
         </button>
@@ -81,7 +84,7 @@ export function EducationScreen() {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`chip text-xs ${selectedCategory === cat ? 'bg-primary-500 text-white' : 'bg-neutral-100 dark:bg-neutral-700/50 text-neutral-600 dark:text-neutral-300'}`}
+            className={`chip shrink-0 whitespace-nowrap text-xs ${selectedCategory === cat ? 'bg-primary-500 text-ink-onlight' : chipOff}`}
           >
             {cat}
           </button>
@@ -93,17 +96,17 @@ export function EducationScreen() {
           <button
             key={article.id}
             onClick={() => setSelectedArticle(article)}
-            className="card p-4 flex items-start gap-4 text-left hover:shadow-md transition-all w-full"
+            className="card flex w-full items-start gap-4 p-4 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
           >
-            <div className="w-11 h-11 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center shrink-0">
-              <BookOpen size={22} />
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
+              <BookOpen size={20} strokeWidth={1.75} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-medium text-primary-700 dark:text-primary-300">{article.category}</span>
+              <h3 className="mt-0.5 text-sm font-semibold text-ink">{article.title}</h3>
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-muted">{article.summary}</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-xs text-primary-600 dark:text-primary-400 font-medium">{article.category}</span>
-              <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm mt-0.5">{article.title}</h3>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-2">{article.summary}</p>
-            </div>
-            <ChevronRight size={18} className="text-neutral-400 shrink-0 mt-1" />
+            <ChevronRight size={18} className="mt-1 shrink-0 text-ink-muted" />
           </button>
         ))}
       </div>

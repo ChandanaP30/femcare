@@ -65,7 +65,7 @@ export default function MLCyclePrediction({ periodStarts, appNextPeriodDate }: P
             Not used in the calendar or reminders.
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-accent-300 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink">
+        <span className="shrink-0 rounded-full bg-accent-300 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink dark:bg-accent-600/25">
           Experimental
         </span>
       </div>
@@ -74,23 +74,23 @@ export default function MLCyclePrediction({ periodStarts, appNextPeriodDate }: P
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="mt-4 text-sm font-medium text-primary-700 hover:text-primary-800"
+        className="mt-4 text-sm font-medium text-primary-700 hover:text-primary-800 dark:text-primary-300"
       >
         {open ? 'Hide details' : 'How was this estimated?'}
       </button>
 
       {open && (
-        <div className="mt-4 space-y-4 border-t border-primary-100 pt-4 text-sm text-ink">
+        <div className="mt-4 space-y-4 border-t border-primary-100 pt-4 text-sm text-ink dark:border-neutral-700">
           <p className="leading-relaxed text-ink-muted">
             This model starts from a typical cycle length and adjusts it toward your own logged cycles.
             The more cycles you log, the more your pattern counts.
           </p>
           <dl className="grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-secondary-100 p-3">
+            <div className="rounded-xl bg-secondary-100 p-3 dark:bg-neutral-800">
               <dt className="text-xs text-ink-muted">Cycles used</dt>
               <dd className="mt-0.5 font-semibold">{cycleCount}</dd>
             </div>
-            <div className="rounded-xl bg-secondary-100 p-3">
+            <div className="rounded-xl bg-secondary-100 p-3 dark:bg-neutral-800">
               <dt className="text-xs text-ink-muted">Your average cycle</dt>
               <dd className="mt-0.5 font-semibold">
                 {average !== null ? `${average.toFixed(1)} days` : 'Not yet'}
@@ -102,7 +102,7 @@ export default function MLCyclePrediction({ periodStarts, appNextPeriodDate }: P
               <p className="text-xs text-ink-muted">Recent cycle lengths</p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {recent.map((d, i) => (
-                  <span key={`${d}-${i}`} className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium ring-1 ring-primary-100">
+                  <span key={`${d}-${i}`} className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium ring-1 ring-primary-100 dark:bg-neutral-800">
                     {d} days
                   </span>
                 ))}

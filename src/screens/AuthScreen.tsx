@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Logo } from '@/components/Logo';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
@@ -59,6 +60,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
 
   return (
     <div className="min-h-screen bg-neutral-200 dark:bg-neutral-950 flex justify-center">
+      <div className="px-6 pt-4"><LanguagePicker /></div>
       <div className="relative w-full max-w-[430px] min-h-screen bg-neutral-50 dark:bg-neutral-900 shadow-2xl flex flex-col">
       <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full px-6 py-8">
         <div className="mb-8 flex justify-center">

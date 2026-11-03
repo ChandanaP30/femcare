@@ -57,7 +57,7 @@ export function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
   const regularityOptions: { value: string; label: string }[] = [
     { value: 'regular', label: t('regular') },
     { value: 'irregular', label: t('irregular') },
-    { value: 'unsure', label: t('unsure') },
+    
   ];
 
   return (
@@ -211,7 +211,7 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
         onClick={() => onChange(!checked)}
         className={`relative w-12 h-7 rounded-full transition-colors ${checked ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-700'}`}
       >
-        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : ''}`} />
+        <span className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow-sm transition-transform dark:bg-neutral-800 ${checked ? 'translate-x-5' : ''}`} />
       </button>
     </div>
   );

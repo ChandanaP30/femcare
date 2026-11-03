@@ -45,7 +45,7 @@ export function UnlockScreen() {
   return (
     <div className="mx-auto flex min-h-screen max-w-[430px] flex-col justify-center bg-bg p-6">
       <div className="card p-6">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-ink">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 text-ink dark:bg-primary-900/40">
           <KeyRound size={22} strokeWidth={1.75} />
         </span>
         <h1 className="mt-4 font-serif text-2xl text-ink">
@@ -76,7 +76,7 @@ export function UnlockScreen() {
             />
           )}
         </div>
-        {error && <p className="mt-3 text-sm text-error-600">{error}</p>}
+        {error && <p className="mt-3 text-sm text-error-600 dark:text-error-300">{error}</p>}
         <button onClick={submit} disabled={busy || !pass} className="btn-primary mt-5 w-full">
           {busy ? 'Please wait...' : hasSetup ? 'Unlock' : 'Create passphrase'}
         </button>
