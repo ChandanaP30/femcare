@@ -1,3 +1,5 @@
+import { useLanguage } from '@/lib/language-context';
+import { getLangCode } from '@/lib/lang-store';
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -34,7 +36,7 @@ import { useEffect } from 'react';
 
 export function PeriodLeaveGuide() {
   const { profile, user } = useAuth();
-  const lang: Language = 'en';
+  const { t, lang } = useLanguage();
 
   const [countryCode, setCountryCode] = useState('');
   const [stateCode, setStateCode] = useState('');
@@ -92,7 +94,6 @@ export function PeriodLeaveGuide() {
     });
   }
 
-  const t = (key: Parameters<typeof getUIString>[0]) => getUIString(key, lang);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -109,7 +110,7 @@ export function PeriodLeaveGuide() {
       <div className="card-soft p-4 flex items-start gap-3">
         <Sparkles size={18} className="text-accent-500 shrink-0 mt-0.5 dark:text-accent-300" />
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          All policies below are verified against official government sources. Always confirm with your HR department or institution, as employer-specific policies may differ.
+          {t('leaveDisclaimer')}
         </p>
       </div>
 
@@ -200,7 +201,7 @@ export function PeriodLeaveGuide() {
               <div key={i} className="flex items-center justify-between bg-neutral-50 dark:bg-neutral-700/30 rounded-xl p-3">
                 <div>
                   <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
-                    {new Date(p.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} — {new Date(p.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(p.start).toLocaleDateString(getLangCode(), { month: 'short', day: 'numeric' })} — {new Date(p.end).toLocaleDateString(getLangCode(), { month: 'short', day: 'numeric' })}
                   </p>
                   <p className="text-xs text-neutral-400">{i === 0 ? 'Next predicted' : `${i + 1} cycles ahead`}</p>
                 </div>
@@ -258,7 +259,7 @@ export function PeriodLeaveGuide() {
                       <div className="bg-neutral-50 dark:bg-neutral-700/30 rounded-xl p-3">
                         <p className="text-xs text-neutral-500 dark:text-neutral-400">{t('leaveDays')}</p>
                         <p className="font-semibold text-neutral-900 dark:text-neutral-100 mt-0.5">
-                          {policy.leaveDays} {t('days')}
+                          {policy.leaveDays} {t('leaveDaysShort')}
                           <span className="text-xs font-normal text-neutral-400 ml-1">{policy.leaveDays <= 1 ? t('perMonth') : t('perYear')}</span>
                         </p>
                       </div>
@@ -334,7 +335,7 @@ export function PeriodLeaveGuide() {
             }}
             className="w-full flex items-center justify-between text-sm font-semibold text-neutral-700 dark:text-neutral-300"
           >
-            <span>All verified policies ({LEAVE_POLICIES.length})</span>
+            <span>{t('allVerifiedPolicies', { n: LEAVE_POLICIES.length })}</span>
             <ChevronDown size={18} className="text-neutral-400" />
           </button>
           <div id="all-policies" className="hidden mt-4 space-y-2">

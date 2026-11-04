@@ -1,3 +1,4 @@
+import { getLangCode } from '@/lib/lang-store';
 import { useAuth } from '@/lib/auth-context';
 import { useCycleData } from '@/lib/use-cycle-data';
 import { getCycleLengths, getPeriodDurations, parseDate } from '@/lib/cycle';
@@ -111,8 +112,8 @@ export default function CycleHistory() {
               <CalIcon size={16} className="text-primary flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-sm text-ink dark:text-gray-100">
-                  {new Date(p.start_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  {p.end_date && ` – ${new Date(p.end_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short' })}`}
+                  {new Date(p.start_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {p.end_date && ` – ${new Date(p.end_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short' })}`}
                 </p>
                 {i < periods.length - 1 && cycleLengths.length > 0 && (
                   <p className="text-xs text-ink-muted dark:text-ink-muted-dark">

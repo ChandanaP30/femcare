@@ -1,3 +1,5 @@
+import { translateSymptom, translateMood } from '@/lib/symptom-labels';
+import { getLangCode } from '@/lib/lang-store';
 import { createPortal } from 'react-dom';
 import { Sparkles as FabSparkles } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
@@ -19,7 +21,7 @@ interface HomeDashboardProps {
 
 export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
   const { profile, user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [periods, setPeriods] = useState<Period[]>([]);
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
@@ -89,7 +91,7 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
     return t('goodNight');
   })();
 
-  const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const todayLabel = new Date().toLocaleDateString(getLangCode(), { weekday: 'long', month: 'long', day: 'numeric' });
 
   const phaseKey = cycleInfo
     ? cycleInfo.phase === 'menstrual' ? 'menstrualPhase'
@@ -225,8 +227,8 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
             />
 
             <div className="mt-5 grid grid-cols-3 gap-3 border-t border-primary-100 pt-4 dark:border-white/10">
-              <Stat label="Predicted next cycle" value={`${cycleInfo.cycleLength} d`} />
-              <Stat label="Your average cycle" value={`${historyAverage ?? profile?.cycle_length ?? 28} d`} />
+              <Stat label={t('predictedNextCycle')} value={`${cycleInfo.cycleLength} d`} />
+              <Stat label={t('yourAverageCycle')} value={`${historyAverage ?? profile?.cycle_length ?? 28} d`} />
               <Stat label={t('periodDuration')} value={`${cycleInfo.periodDuration} d`} />
             </div>
             <button
@@ -324,7 +326,7 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
               }`}
             >
               <span className="text-lg">{m.emoji}</span>
-              {m.label}
+              {translateMood(m.key, lang)}
             </button>
           ))}
         </div>
@@ -342,7 +344,7 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
                   : 'bg-bg-card text-ink-muted ring-1 ring-primary-100 dark:ring-white/15'
               }`}
             >
-              {s}
+              {translateSymptom(s, lang)}
             </button>
           ))}
         </div>

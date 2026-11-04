@@ -1,3 +1,4 @@
+import { getLangCode } from '@/lib/lang-store';
 import { useEffect, useState, useRef } from 'react';
 import { FileText, Download, Share2, Eye, Calendar, Activity, Heart } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -30,7 +31,7 @@ export default function HealthReport() {
   const topMoods = [...moodFreq.entries()].sort((a, b) => b[1] - a[1]);
 
   const recentPeriods = [...periods].reverse().slice(0, 6);
-  const reportDate = new Date().toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' });
+  const reportDate = new Date().toLocaleDateString(getLangCode(), { day: 'numeric', month: 'long', year: 'numeric' });
 
   const hasData = periods.length > 0 || symptoms.length > 0;
 
@@ -139,8 +140,8 @@ export default function HealthReport() {
             <tbody>
               {recentPeriods.map(p => (
                 <tr key={p.id} className="border-t border-gray-100 dark:border-gray-800">
-                  <td className="py-1.5 text-ink dark:text-gray-200">{new Date(p.start_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                  <td className="py-1.5 text-ink dark:text-gray-200">{p.end_date ? new Date(p.end_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short' }) : 'In progress'}</td>
+                  <td className="py-1.5 text-ink dark:text-gray-200">{new Date(p.start_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                  <td className="py-1.5 text-ink dark:text-gray-200">{p.end_date ? new Date(p.end_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short' }) : 'In progress'}</td>
                   <td className="py-1.5 text-ink dark:text-gray-200">{p.duration ? `${p.duration} days` : '—'}</td>
                 </tr>
               ))}
@@ -196,7 +197,7 @@ export default function HealthReport() {
             <div className="section">
               {symptoms.filter(s => s.notes).slice(-5).map(s => (
                 <div key={s.id} className="py-1 text-sm">
-                  <span className="text-ink-muted dark:text-ink-muted-dark">{new Date(s.entry_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short' })}: </span>
+                  <span className="text-ink-muted dark:text-ink-muted-dark">{new Date(s.entry_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short' })}: </span>
                   <span className="text-ink dark:text-gray-200 italic">"{s.notes}"</span>
                 </div>
               ))}

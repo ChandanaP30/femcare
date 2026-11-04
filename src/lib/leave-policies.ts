@@ -1,3 +1,4 @@
+import { getLangCode } from './lang-store';
 // Verified menstrual/period leave policies from official sources.
 // NEVER invent or guess legal policies. Only include policies with confirmed official sources.
 // Last updated: 2026-09-07
@@ -482,7 +483,7 @@ ${name}`;
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString(getLangCode(), { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export const UI_STRINGS = {

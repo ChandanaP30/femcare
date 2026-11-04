@@ -1,15 +1,31 @@
 import { useState } from 'react';
 import { EDUCATION_ARTICLES, EDUCATION_CATEGORIES, type EducationArticle } from '@/lib/education';
+import { localizeArticle } from '@/lib/education-i18n';
 import { ChevronRight, ArrowLeft, BookOpen, ExternalLink } from 'lucide-react';
 import { useLanguage } from '@/lib/language-context';
 import { PageHeader, HeaderArt } from '@/components/PageHeader';
 
+const CATEGORY_KEY: Record<string, string> = {
+  'Menstrual cycle basics': 'catCycleBasics',
+  'Period cramps': 'catPeriodCramps',
+  'PMS': 'catPms',
+  'Hygiene': 'catHygiene',
+  'Nutrition': 'catNutrition',
+  'Exercise': 'catExercise',
+  'Mental wellbeing': 'catMentalWellbeing',
+  'When to seek medical help': 'catWhenToSeekHelp',
+};
+
 export function EducationScreen() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<EducationArticle | null>(null);
 
+  type Key = Parameters<typeof t>[0];
+  const catLabel = (cat: string) => (CATEGORY_KEY[cat] ? t(CATEGORY_KEY[cat] as Key) : cat);
+
   if (selectedArticle) {
+    const shown = localizeArticle(selectedArticle, lang);
     return (
       <div className="space-y-5 pb-8">
         <button
@@ -23,24 +39,24 @@ export function EducationScreen() {
           <HeaderArt art="leaves" className="pointer-events-none absolute -right-3 -top-2 h-24 w-24 opacity-90" />
           <div className="relative pr-16">
             <span className="inline-flex rounded-full bg-white/70 px-2.5 py-0.5 text-xs font-medium text-primary-800 dark:bg-white/10 dark:text-primary-200">
-              {selectedArticle.category}
+              {catLabel(selectedArticle.category)}
             </span>
-            <h1 className="mt-2 break-words font-serif text-2xl text-ink">{selectedArticle.title}</h1>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{selectedArticle.summary}</p>
+            <h1 className="mt-2 break-words font-serif text-2xl text-ink">{shown.title}</h1>
+            <p className="mt-2 text-sm leading-relaxed text-ink-muted">{shown.summary}</p>
           </div>
         </section>
 
         <section className="card space-y-4 p-5">
-          {selectedArticle.content.map((para, i) => (
+          {shown.content.map((para, i) => (
             <p key={i} className="text-sm leading-7 text-ink">{para}</p>
           ))}
         </section>
 
-        {selectedArticle.references.length > 0 && (
+        {shown.references.length > 0 && (
           <section>
             <h3 className="section-title mb-2">{t('references')}</h3>
             <div className="space-y-2">
-              {selectedArticle.references.map((ref, i) => (
+              {shown.references.map((ref, i) => (
                 <a
                   key={i}
                   href={ref.url}
@@ -63,9 +79,10 @@ export function EducationScreen() {
     );
   }
 
-  const filteredArticles = selectedCategory
+  const filteredArticles = (selectedCategory
     ? EDUCATION_ARTICLES.filter((a) => a.category === selectedCategory)
-    : EDUCATION_ARTICLES;
+    : EDUCATION_ARTICLES
+  ).map((a) => localizeArticle(a, lang));
 
   const chipOff = 'bg-bg-card text-ink-muted ring-1 ring-primary-100 dark:ring-white/15';
 
@@ -86,7 +103,7 @@ export function EducationScreen() {
             onClick={() => setSelectedCategory(cat)}
             className={`chip shrink-0 whitespace-nowrap text-xs ${selectedCategory === cat ? 'bg-primary-500 text-ink-onlight' : chipOff}`}
           >
-            {cat}
+            {catLabel(cat)}
           </button>
         ))}
       </div>
@@ -95,14 +112,14 @@ export function EducationScreen() {
         {filteredArticles.map((article) => (
           <button
             key={article.id}
-            onClick={() => setSelectedArticle(article)}
+            onClick={() => setSelectedArticle(EDUCATION_ARTICLES.find((a) => a.id === article.id) ?? null)}
             className="card flex w-full items-start gap-4 p-4 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
           >
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
               <BookOpen size={20} strokeWidth={1.75} />
             </span>
             <div className="min-w-0 flex-1">
-              <span className="text-xs font-medium text-primary-700 dark:text-primary-300">{article.category}</span>
+              <span className="text-xs font-medium text-primary-700 dark:text-primary-300">{catLabel(article.category)}</span>
               <h3 className="mt-0.5 text-sm font-semibold text-ink">{article.title}</h3>
               <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-ink-muted">{article.summary}</p>
             </div>

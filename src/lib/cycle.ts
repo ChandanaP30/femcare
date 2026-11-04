@@ -1,3 +1,4 @@
+import { getLangCode } from './lang-store';
 import type { CycleInfo, CyclePhase, Period, Profile } from './types';
 
 // Date-only strings (YYYY-MM-DD) are parsed as LOCAL dates. new Date('2026-10-01')
@@ -24,14 +25,14 @@ export function formatDate(date: Date | string | null): string {
   if (!date) return '—';
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString(getLangCode(), { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function formatDateShort(date: Date | string | null): string {
   if (!date) return '—';
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(getLangCode(), { month: 'short', day: 'numeric' });
 }
 
 export function todayStr(): string {

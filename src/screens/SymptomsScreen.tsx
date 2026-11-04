@@ -1,3 +1,4 @@
+import { translateSymptom, translateMood } from '@/lib/symptom-labels';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -18,7 +19,7 @@ const KNOWN = new Set<string>([...PHYSICAL_ALL, ...EMOTIONAL_ALL]);
 
 export function SymptomsScreen() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [selectedDate, setSelectedDate] = useState(todayStr());
   const [mood, setMood] = useState('');
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -159,7 +160,7 @@ export function SymptomsScreen() {
               }`}
             >
               <span className="text-lg">{m.emoji}</span>
-              {m.label}
+              {translateMood(m.key, lang)}
             </button>
           ))}
         </div>
@@ -179,7 +180,7 @@ export function SymptomsScreen() {
               className={`chip ${symptoms.includes(s) ? chipOn : chipOff}`}
             >
               {symptoms.includes(s) && <Check size={14} />}
-              {s}
+              {translateSymptom(s, lang)}
             </button>
           ))}
         </div>
@@ -194,11 +195,11 @@ export function SymptomsScreen() {
               className={`chip ${symptoms.includes(s) ? chipOn : chipOff}`}
             >
               {symptoms.includes(s) && <Check size={14} />}
-              {s}
+              {translateSymptom(s, lang)}
             </button>
           ))}
         </div>
-        <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">Your own</p>
+        <p className="mb-2 mt-5 text-xs font-medium uppercase tracking-[0.14em] text-ink-muted">{t('symOwnHeading')}</p>
         {customSymptoms.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {customSymptoms.map((s) => (
@@ -209,7 +210,7 @@ export function SymptomsScreen() {
                 className={`chip ${symptoms.includes(s) ? chipOn : chipOff}`}
               >
                 {symptoms.includes(s) && <Check size={14} />}
-                {s}
+                {translateSymptom(s, lang)}
               </button>
             ))}
           </div>
@@ -221,7 +222,7 @@ export function SymptomsScreen() {
             maxLength={40}
             onChange={(e) => setCustomInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
-            placeholder="Type a symptom, e.g. dry skin"
+            placeholder={t('symOwnPlaceholder')}
             aria-label="Add your own symptom"
             className="input-field flex-1"
           />

@@ -16,39 +16,49 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [lang, setLangState] = useState<Language>('en');
 
+  const PENDING = 'femcare_lang_pending';
+
+  async function saveLangToDb(userId: string, value: Language) {
+    const { data: row } = await supabase.from('user_settings').select('id').eq('user_id', userId).maybeSingle();
+    if (row) {
+      await supabase.from('user_settings').update({ language: value, updated_at: new Date().toISOString() }).eq('user_id', userId);
+    } else {
+      await supabase.from('user_settings').insert({ user_id: userId, language: value });
+    }
+  }
+
   useEffect(() => {
     if (!user) {
-      const saved = localStorage.getItem('femcare_lang');
-      setLangState((saved as Language) || 'en');
+      const saved = localStorage.getItem('femcare_lang') as Language | null;
+      setLangState(saved || 'en');
       return;
     }
-
-    async function load() {
-      if (!user) return;
-      const { data } = await supabase
-        .from('user_settings')
-        .select('language')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (data?.language) {
-        setLangState(data.language as Language);
-        localStorage.setItem('femcare_lang', data.language);
-      } else {
-        const saved = localStorage.getItem('femcare_lang') as Language | null;
-        setLangState(saved || 'en');
+    let active = true;
+    (async () => {
+      const local = localStorage.getItem('femcare_lang') as Language | null;
+      const pending = localStorage.getItem(PENDING) === '1';
+      if (pending && local) {
+        // A language chosen before signing in is saved to the new account and used from now on.
+        localStorage.removeItem(PENDING);
+        await saveLangToDb(user.id, local).catch(() => {});
+        if (active) setLangState(local);
+        return;
       }
-    }
-    load();
+      const { data } = await supabase.from('user_settings').select('language').eq('user_id', user.id).maybeSingle();
+      const value = (data?.language as Language | undefined) || local || 'en';
+      if (active) setLangState(value);
+      localStorage.setItem('femcare_lang', value);
+    })();
+    return () => { active = false; };
   }, [user]);
 
   const setLang = async (newLang: Language) => {
     setLangState(newLang);
     localStorage.setItem('femcare_lang', newLang);
     if (user) {
-      await supabase
-        .from('user_settings')
-        .update({ language: newLang, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
+      await saveLangToDb(user.id, newLang);
+    } else {
+      localStorage.setItem(PENDING, '1');
     }
   };
 

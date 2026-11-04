@@ -1,3 +1,4 @@
+import { getLangCode } from '@/lib/lang-store';
 import { useEffect, useState } from 'react';
 import {
   Droplet, HeartPulse, Sparkles, MapPin, Siren,
@@ -276,7 +277,7 @@ export default function Home({ onNavigate }: { onNavigate: (p: PageId) => void }
             </div>
             <div>
               <p className="text-sm font-medium text-ink dark:text-gray-100">
-                {new Date(periods[periods.length - 1].start_date).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}
+                {new Date(periods[periods.length - 1].start_date).toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
               <p className="text-xs text-ink-muted dark:text-ink-muted-dark">
                 {periods[periods.length - 1].end_date

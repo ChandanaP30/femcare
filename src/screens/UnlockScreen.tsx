@@ -1,3 +1,4 @@
+import { useLanguage } from '@/lib/language-context';
 import { useState, type ReactNode } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -12,6 +13,7 @@ export function CryptoGate({ children }: { children: ReactNode }) {
 
 export function UnlockScreen() {
   const { hasSetup, setup, unlock } = useCrypto();
+  const { t } = useLanguage();
   const [pass, setPass] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -49,11 +51,11 @@ export function UnlockScreen() {
           <KeyRound size={22} strokeWidth={1.75} />
         </span>
         <h1 className="mt-4 font-serif text-2xl text-ink">
-          {hasSetup ? 'Unlock your notes' : 'Create a passphrase'}
+          {hasSetup ? t('unlockTitle') : 'Create a passphrase'}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">
           {hasSetup
-            ? 'Enter your passphrase to open your private notes.'
+            ? t('unlockBody')
             : 'This encrypts your notes, contacts, and saved chats. If you forget it, that data cannot be recovered.'}
         </p>
         <div className="mt-5 space-y-3">

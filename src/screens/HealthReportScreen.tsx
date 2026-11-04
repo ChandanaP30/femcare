@@ -1,3 +1,4 @@
+import { getLangCode } from '@/lib/lang-store';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Download, ShieldCheck, Activity, CalendarDays, Droplet, Lock } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -10,7 +11,7 @@ const DAY = 86400000;
 const parseLocal = (s: string) => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
 const daysBetween = (a: Date, b: Date) => Math.round((b.getTime() - a.getTime()) / DAY);
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
-const fmtDate = (d: Date) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDate = (d: Date) => d.toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short', year: 'numeric' });
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 
 function summarize(periods: PeriodRow[], logs: LogRow[]) {

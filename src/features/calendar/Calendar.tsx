@@ -1,3 +1,5 @@
+import { translateSymptom, translateMood } from '@/lib/symptom-labels';
+import { getLangCode } from '@/lib/lang-store';
 import { useEffect, useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Droplet, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -287,18 +289,18 @@ export default function Calendar() {
       )}
 
       {/* Date Detail Modal */}
-      <Modal open={!!selectedDate} onClose={() => setSelectedDate(null)} title={selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('en', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}>
+      <Modal open={!!selectedDate} onClose={() => setSelectedDate(null)} title={selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString(getLangCode(), { weekday: 'long', day: 'numeric', month: 'long' }) : ''}>
         {selectedDate && (
           <div className="space-y-4">
             {selectedPeriod ? (
               <div className="space-y-3">
                 <Badge color="primary">Logged period</Badge>
                 <p className="text-sm text-ink dark:text-gray-200">
-                  Started: {new Date(selectedPeriod.start_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short' })}
+                  Started: {new Date(selectedPeriod.start_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short' })}
                 </p>
                 {selectedPeriod.end_date && (
                   <p className="text-sm text-ink dark:text-gray-200">
-                    Ended: {new Date(selectedPeriod.end_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short' })}
+                    Ended: {new Date(selectedPeriod.end_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short' })}
                   </p>
                 )}
                 {selectedPeriod.blood_flow && (
@@ -326,7 +328,7 @@ export default function Calendar() {
                     <p className="text-sm font-medium text-ink dark:text-gray-100 mb-2">Symptoms logged:</p>
                     <div className="flex flex-wrap gap-2">
                       {selectedSymptomData.symptoms.map((s) => (
-                        <Badge key={s} color="success">{s}</Badge>
+                        <Badge key={s} color="success">{translateSymptom(s, lang)}</Badge>
                       ))}
                     </div>
                   </div>
@@ -428,7 +430,7 @@ export default function Calendar() {
                   onClick={() => toggleLogSymptom(s)}
                   className={`chip ${logSymptoms.includes(s) ? 'bg-accent text-white' : 'bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300'}`}
                 >
-                  {s}
+                  {translateSymptom(s, lang)}
                 </button>
               ))}
             </div>
@@ -444,7 +446,7 @@ export default function Calendar() {
                   onClick={() => toggleLogSymptom(s)}
                   className={`chip ${logSymptoms.includes(s) ? 'bg-accent text-white' : 'bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300'}`}
                 >
-                  {s}
+                  {translateSymptom(s, lang)}
                 </button>
               ))}
             </div>

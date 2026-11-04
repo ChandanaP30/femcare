@@ -1,3 +1,5 @@
+import { translateSymptom, translateMood } from '@/lib/symptom-labels';
+import { getLangCode } from '@/lib/lang-store';
 import { useEffect, useState } from 'react';
 import { HeartPulse, Trash2, Calendar as CalIcon } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
@@ -115,7 +117,7 @@ export default function Symptoms() {
               onClick={() => toggleSymptom(s)}
               className={`chip ${selectedSymptoms.includes(s) ? 'bg-accent text-white' : 'bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300'}`}
             >
-              {s}
+              {translateSymptom(s, lang)}
             </button>
           ))}
         </div>
@@ -131,7 +133,7 @@ export default function Symptoms() {
               onClick={() => toggleSymptom(s)}
               className={`chip ${selectedSymptoms.includes(s) ? 'bg-accent text-white' : 'bg-gray-100 dark:bg-gray-800 text-ink dark:text-gray-300'}`}
             >
-              {s}
+              {translateSymptom(s, lang)}
             </button>
           ))}
         </div>
@@ -175,13 +177,13 @@ export default function Symptoms() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-ink dark:text-gray-100">
-                    {new Date(entry.entry_date + 'T00:00:00').toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {new Date(entry.entry_date + 'T00:00:00').toLocaleDateString(getLangCode(), { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                   {entry.mood && <Badge color="accent">{entry.mood}</Badge>}
                   {entry.symptoms && entry.symptoms.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {entry.symptoms.slice(0, 4).map((s) => (
-                        <span key={s} className="text-xs text-ink-muted dark:text-ink-muted-dark">{s}</span>
+                        <span key={s} className="text-xs text-ink-muted dark:text-ink-muted-dark">{translateSymptom(s, lang)}</span>
                       )).reduce((acc: React.ReactNode[], el, i) => {
                         if (i > 0) acc.push(<span key={`sep${i}`} className="text-gray-300">·</span>);
                         acc.push(el);

@@ -41,3 +41,12 @@ android/**/build/
 # Generated and cached files
 android/app/src/main/assets/public/
 supabase/.temp/
+
+.env
+.env.*
+node_modules
+dist
+android/app/build
+android/build
+android/.gradle
+*.apk

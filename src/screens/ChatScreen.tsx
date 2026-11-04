@@ -1,3 +1,4 @@
+import { getLangCode } from '@/lib/lang-store';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -217,7 +218,7 @@ export function ChatScreen() {
                 </div>
               )}
               <p className={`mt-1.5 text-xs ${msg.sender === 'user' ? 'text-ink-onlight/60' : 'text-ink-muted'}`}>
-                {new Date(msg.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                {new Date(msg.created_at).toLocaleTimeString(getLangCode(), { hour: 'numeric', minute: '2-digit' })}
               </p>
               {msg.sender === 'assistant' && msg.id !== 'welcome' && (
                 <button
