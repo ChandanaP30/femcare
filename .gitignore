@@ -62,3 +62,16 @@ legacy-backup-*/
 *.tsx.bak*
 *.ts.bak*
 leave-head.ts
+
+# Not used by the app: old backups and one-off tools (kept on disk, not published)
+audit_output.txt
+fix-locator.ps1
+install-backup.ps1
+gradle.txt
+sync.txt
+sos-auto-backup-20261113-114537/
+sos-backup-20261111-092724/
+sos-backup-20261111-164006/
+sos-backup-20261111-164233/
+sos-backup-20261111-164517/
+sos-ui-backup-20261113-115447/
