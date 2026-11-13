@@ -35,7 +35,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error('Error loading settings:', error);
+        console.error('Error loading settings:', error.code ?? 'unknown');
         setLoading(false);
         return;
       }
@@ -47,7 +47,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           .select()
           .single();
         if (insertError) {
-          console.error('Error creating settings:', insertError);
+          console.error('Error creating settings:', insertError.code ?? 'unknown');
         } else {
           setSettings(newSettings as UserSettings);
         }

@@ -4,4 +4,6 @@
     <string name="title_activity_main">FemCare</string>
     <string name="package_name">com.femcare.app</string>
     <string name="custom_url_scheme">com.femcare.app</string>
+    <string name="shortcut_sos_short">SOS</string>
+    <string name="shortcut_sos_long">Send SOS</string>
 </resources>

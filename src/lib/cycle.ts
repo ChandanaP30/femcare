@@ -365,3 +365,27 @@ export function getFertileWindows(
 
   return results;
 }
+
+export interface OverdueInfo {
+  expectedDate: string;
+  overdueDays: number;
+  cycleDay: number;
+}
+
+/**
+ * Set only when no period has been logged since the last one and today is past the expected start.
+ * It does not change any prediction: it only reports how late the period is.
+ */
+export function getOverdueInfo(
+  profile: Pick<Profile, 'last_period_date' | 'cycle_length' | 'period_duration'>,
+  periods: Period[]
+): OverdueInfo | null {
+  const lastStart = lastLoggedStart(profile, periods);
+  if (!lastStart) return null;
+  const model = buildPredictionModel(profile, periods);
+  const expected = addDays(lastStart, model.predictedCycleLength);
+  const today = startOfToday();
+  const late = daysBetween(expected, today);
+  if (late < 1) return null;
+  return { expectedDate: toDateStr(expected), overdueDays: late, cycleDay: daysBetween(lastStart, today) + 1 };
+}

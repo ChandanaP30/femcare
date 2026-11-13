@@ -1,9 +1,15 @@
-import { useState, type ReactNode } from 'react';
+import { AskAiFab } from '@/components/AskAiFab';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Logo } from '@/components/Logo';
 import { NAV_ITEMS, type NavKey } from '@/components/nav-items';
 import { useLanguage } from '@/lib/language-context';
-import { Menu, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Menu, X, ChevronRight, ChevronLeft, Bell } from 'lucide-react';
 import { OfflineBanner } from './OfflineBanner';
+import { OfflineStatusDot } from './OfflineStatusDot';
+import { useAuth } from '@/lib/auth-context';
+import { Avatar } from '@/components/Avatar';
+import { readAvatar } from '@/lib/avatar';
+import { warmOfflineData } from '@/lib/offline-warm';
 
 interface AppShellProps {
   currentNav: NavKey;
@@ -18,9 +24,20 @@ const EXTRA_PAGE_KEYS = [
   'symptoms', 'log-period', 'history', 'chat', 'locator', 'education', 'leave-guide', 'settings', 'privacy', 'about',
 ] as const;
 
-export function AppShell({ currentNav, onNavChange, children, onNavigate, showBack = false, onBack }: AppShellProps) {
+export function AppShell({ currentNav, currentPage, onNavChange, children, onNavigate, showBack = false, onBack }: AppShellProps & { currentPage?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useLanguage();
+  const { profile, user } = useAuth();
+  const avatar = readAvatar(profile?.preferences);
+  const avatarInitial = (profile?.name || '?').charAt(0).toUpperCase();
+  const userId = user?.id;
+  useEffect(() => {
+    if (!userId) return;
+    void warmOfflineData(userId);
+    const again = () => { void warmOfflineData(userId); };
+    window.addEventListener('online', again);
+    return () => window.removeEventListener('online', again);
+  }, [userId]);
 
   const navLabels: Record<NavKey, string> = {
     home: t('home'),
@@ -60,13 +77,13 @@ export function AppShell({ currentNav, onNavChange, children, onNavigate, showBa
             )}
             <Logo size="sm" />
           </div>
-          <button
+          <div className="flex shrink-0 items-center gap-1"><OfflineStatusDot /><button onClick={() => { setMenuOpen(false); onNavigate('notifications'); }} className="flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition-colors hover:bg-primary-50 hover:text-ink dark:hover:bg-white/5" aria-label={t('notifications')}><Bell size={21} strokeWidth={1.75} /></button><button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-2 rounded-xl text-ink-muted hover:bg-primary-50 dark:hover:bg-white/5 transition-colors"
             aria-label={t('menu')}
           >
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          </button></div>
         </header>
 
         <OfflineBanner />
@@ -96,6 +113,7 @@ export function AppShell({ currentNav, onNavChange, children, onNavigate, showBa
         {/* Main content */}
         <main className="flex-1 overflow-y-auto px-4 py-4 pb-28">
           {children}
+      <AskAiFab hidden={currentPage === 'chat'} onOpen={() => onNavigate('chat')} />
         </main>
 
         {/* Bottom nav */}
@@ -114,7 +132,11 @@ export function AppShell({ currentNav, onNavChange, children, onNavigate, showBa
                     : 'text-ink-muted hover:text-ink'
                 }`}
               >
-                <Icon size={22} fill={active ? 'currentColor' : 'none'} />
+                {item.key === 'profile' && avatar ? (
+                  <Avatar avatar={avatar} fallback={avatarInitial} size={24} className={`ring-2 ${active ? 'ring-primary-400' : 'ring-white/20'}`} />
+                ) : (
+                  <Icon size={22} fill={active ? 'currentColor' : 'none'} />
+                )}
                 <span className="text-[10px] font-medium">{navLabels[item.key]}</span>
               </button>
             );

@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 import { Logo } from '@/components/Logo';
-import { ArrowRight, Check } from 'lucide-react';
-import { PHYSICAL_SYMPTOMS } from '@/lib/symptoms';
+import { ArrowRight, Check, Plus } from 'lucide-react';
+import { PHYSICAL_SYMPTOMS, EMOTIONAL_SYMPTOMS } from '@/lib/symptoms';
+import { translateSymptom } from '@/lib/symptom-labels';
 
 export function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
-  const { user, updateProfile } = useAuth();
-  const { t } = useLanguage();
+  const { user, updateProfile, signOut } = useAuth();
+  const { t, lang } = useLanguage();
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,12 +19,42 @@ export function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
   const [lastPeriodDate, setLastPeriodDate] = useState('');
   const [cycleRegularity, setCycleRegularity] = useState('regular');
   const [typicalSymptoms, setTypicalSymptoms] = useState<string[]>([]);
+  const [customInput, setCustomInput] = useState('');
   const [notifyPeriod, setNotifyPeriod] = useState(true);
   const [notifyDaily, setNotifyDaily] = useState(true);
 
   function toggleSymptom(symptom: string) {
     setTypicalSymptoms((prev) =>
       prev.includes(symptom) ? prev.filter((s) => s !== symptom) : [...prev, symptom]
+    );
+  }
+
+  const knownSymptoms = new Set<string>([...PHYSICAL_SYMPTOMS, ...EMOTIONAL_SYMPTOMS]);
+  const customChosen = typicalSymptoms.filter((s) => !knownSymptoms.has(s));
+
+  function addCustom() {
+    const val0 = customInput.trim().replace(/\s+/g, ' ').slice(0, 40);
+    if (!val0) return;
+    const match = [...knownSymptoms].find((x) => x.toLowerCase() === val0.toLowerCase())
+      ?? typicalSymptoms.find((x) => x.toLowerCase() === val0.toLowerCase());
+    const val = match ?? val0;
+    setTypicalSymptoms((prev) => (prev.includes(val) ? prev : [...prev, val]));
+    setCustomInput('');
+  }
+
+  function chip(s: string, label: string) {
+    const on = typicalSymptoms.includes(s);
+    return (
+      <button
+        key={s}
+        type="button"
+        onClick={() => toggleSymptom(s)}
+        aria-pressed={on}
+        className={`chip ${on ? 'bg-primary-500 text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'}`}
+      >
+        {on && <Check size={14} />}
+        {label}
+      </button>
     );
   }
 
@@ -64,6 +95,7 @@ export function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
     <div className="min-h-screen bg-neutral-200 dark:bg-neutral-950 flex justify-center">
       <div className="relative w-full max-w-[430px] min-h-screen bg-neutral-50 dark:bg-neutral-900 shadow-2xl flex flex-col">
       <header className="px-6 pt-6 pb-2">
+        <div className="flex justify-end"><button type="button" onClick={() => void signOut()} className="text-sm font-medium text-primary-700 hover:underline dark:text-primary-300">{t('backToLogin')}</button></div>
         <Logo size="sm" />
       </header>
 
@@ -143,18 +175,44 @@ export function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
                 <h2 className="font-serif text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-1">{t('typicalSymptoms')}</h2>
                 <p className="text-neutral-500 dark:text-neutral-400 text-sm">{t('selectCommonSymptoms')}</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {PHYSICAL_SYMPTOMS.map((s) => (
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-neutral-500 dark:text-neutral-400">{t('physicalSymptoms')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {PHYSICAL_SYMPTOMS.map((s) => chip(s, translateSymptom(s, lang)))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-neutral-500 dark:text-neutral-400">{t('emotionalSymptoms')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {EMOTIONAL_SYMPTOMS.map((s) => chip(s, translateSymptom(s, lang)))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-[0.14em] text-neutral-500 dark:text-neutral-400">{t('symOwnHeading')}</p>
+                {customChosen.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">{customChosen.map((s) => chip(s, s))}</div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customInput}
+                    maxLength={40}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustom(); } }}
+                    placeholder={t('symOwnPlaceholder')}
+                    aria-label="Add your own symptom"
+                    className="input-field flex-1"
+                  />
                   <button
-                    key={s}
                     type="button"
-                    onClick={() => toggleSymptom(s)}
-                    className={`chip ${typicalSymptoms.includes(s) ? 'bg-primary-500 text-white' : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'}`}
+                    onClick={addCustom}
+                    disabled={!customInput.trim()}
+                    aria-label="Add symptom"
+                    className="btn-primary flex items-center justify-center !px-4"
                   >
-                    {typicalSymptoms.includes(s) && <Check size={14} />}
-                    {s}
+                    <Plus size={18} />
                   </button>
-                ))}
+                </div>
               </div>
             </div>
           )}

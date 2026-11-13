@@ -8,7 +8,12 @@ interface CryptoMeta { salt: string; check: string }
 interface CryptoContextValue {
   hasSetup: boolean;
   unlocked: boolean;
+  /** Forgets the key in memory: the passphrase is needed again. The person stays signed in. */
+  lock: () => void;
   setup: (passphrase: string) => Promise<void>;
+  /** Sets a new passphrase after the person has proved who they are with an emailed code.
+   *  Data encrypted with the old passphrase cannot be opened afterwards. */
+  resetPassphrase: (passphrase: string) => Promise<void>;
   unlock: (passphrase: string) => Promise<boolean>;
   encrypt: (plain: string) => Promise<string>;
   decrypt: (stored: string) => Promise<string>;
@@ -82,7 +87,9 @@ export function CryptoProvider({ children }: { children: ReactNode }) {
   const value: CryptoContextValue = {
     hasSetup: meta !== null,
     unlocked: key !== null,
+    lock: () => setKey(null),
     setup,
+    resetPassphrase: setup,
     unlock,
     encrypt,
     decrypt,

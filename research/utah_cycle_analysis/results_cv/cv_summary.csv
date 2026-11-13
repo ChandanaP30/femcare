@@ -1,0 +1,5 @@
+method,MAE_mean_over_seeds,MAE_sd_over_seeds,RMSE_mean_over_seeds,RMSE_sd_over_seeds,MAE_fold_mean,MAE_fold_sd,MAE_bootstrap_point,MAE_CI95_low,MAE_CI95_high,n_examples
+ridge,2.982,0.004,5.409,0.013,2.979,0.195,2.982,2.74,3.263,2582
+gradient_boosting,3.01,0.015,5.383,0.033,3.008,0.191,3.01,2.76,3.272,2582
+app_ewma,3.031,0.0,5.393,0.0,3.03,0.195,3.031,2.782,3.327,2582
+last_cycle,3.489,0.0,6.202,0.0,3.488,0.252,3.489,3.213,3.814,2582

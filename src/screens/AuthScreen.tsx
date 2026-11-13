@@ -1,11 +1,13 @@
+import { describeAuthError } from '@/lib/auth-security';
 import { useState } from 'react';
 import { Logo } from '@/components/Logo';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
+import { EmailCodeSignIn } from '@/components/EmailCodeSignIn';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 
-type Mode = 'login' | 'signup' | 'forgot';
+type Mode = 'login' | 'signup' | 'forgot' | 'code';
 
 export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
   const [mode, setMode] = useState<Mode>('login');
@@ -30,7 +32,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
       const { error } = await resetPassword(email);
       setLoading(false);
       if (error) {
-        setError(error);
+        setError(describeAuthError(error, t));
       } else {
         setResetSent(true);
       }
@@ -38,7 +40,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
     }
 
     if (mode === 'signup' && password !== confirmPassword) {
-      setError(t('somethingWentWrong'));
+      setError(t('authPasswordMismatch'));
       return;
     }
 
@@ -52,7 +54,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
     setLoading(false);
 
     if (result.error) {
-      setError(result.error);
+      setError(describeAuthError(result.error, t));
     } else {
       onAuthSuccess();
     }
@@ -67,7 +69,7 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
           <Logo size="lg" />
         </div>
 
-        {mode === 'forgot' && resetSent ? (
+        {mode === 'code' ? <EmailCodeSignIn onAuthSuccess={onAuthSuccess} onBack={() => setMode('login')} /> : mode === 'forgot' && resetSent ? (
           <div className="card p-6 text-center animate-fade-in">
             <div className="w-14 h-14 mx-auto rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center mb-4">
               <Mail className="text-success-600 dark:text-success-400" size={28} />
@@ -187,6 +189,11 @@ export function AuthScreen({ onAuthSuccess }: { onAuthSuccess: () => void }) {
               ) : mode === 'login' ? t('signIn') : mode === 'signup' ? t('createAccount') : t('sendResetLink')}
             </button>
 
+            {mode === 'login' && (
+              <button type="button" onClick={() => setMode('code')} className="btn-secondary w-full mt-3">
+                {t('signInWithCode')}
+              </button>
+            )}
             <div className="mt-6 text-center text-sm text-neutral-500 dark:text-neutral-400">
               {mode === 'login' ? (
                 <>{t('dontHaveAccount')} <button type="button" onClick={() => setMode('signup')} className="text-primary-600 dark:text-primary-400 font-medium hover:underline">{t('signUp')}</button></>

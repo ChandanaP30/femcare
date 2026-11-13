@@ -1,3 +1,5 @@
+import { translateSymptom } from '@/lib/symptom-labels';
+import { PHYSICAL_SYMPTOMS, EMOTIONAL_SYMPTOMS } from '@/lib/symptoms';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
@@ -29,14 +31,11 @@ const MOOD_OPTIONS = [
   { key: 'irritable', emoji: '😤', labelKey: 'irritable' as const },
 ];
 
-const SYMPTOM_OPTIONS = [
-  'cramps', 'headache', 'backPain', 'bloating', 'acne', 'fatigue', 'nausea', 'breastTenderness', 'dizziness',
-  'irritability', 'anxiety', 'sadness', 'moodSwings', 'stress', 'lowEnergy',
-] as const;
+const SYMPTOM_OPTIONS: readonly string[] = [...PHYSICAL_SYMPTOMS, ...EMOTIONAL_SYMPTOMS];
 
 export function PeriodLogScreen({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { profile, user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [periods, setPeriods] = useState<Period[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,6 +46,16 @@ export function PeriodLogScreen({ onNavigate }: { onNavigate: (page: string) => 
   const [endDate, setEndDate] = useState('');
   const [overallFlow, setOverallFlow] = useState<FlowLevel | null>(null);
   const [periodNotes, setPeriodNotes] = useState('');
+  const [customSymptom, setCustomSymptom] = useState('');
+  function addCustomSymptom() {
+    const v = customSymptom.trim();
+    if (!v || !activeDayDate) return;
+    const cur = getDayDetail(activeDayDate);
+    if (!cur.symptoms.some((s) => s.toLowerCase() === v.toLowerCase())) {
+      updateDayDetail(activeDayDate, { symptoms: [...cur.symptoms, v] });
+    }
+    setCustomSymptom('');
+  }
   const [dayDetails, setDayDetails] = useState<Record<string, DayDetail>>({});
   const [editingPeriodId, setEditingPeriodId] = useState<string | null>(null);
   const [activeDayIndex, setActiveDayIndex] = useState<number>(0);
@@ -90,7 +99,7 @@ export function PeriodLogScreen({ onNavigate }: { onNavigate: (page: string) => 
 
   function toggleSymptom(dateStr: string, symptomKey: string) {
     const detail = getDayDetail(dateStr);
-    const translated = t(symptomKey as 'cramps');
+    const translated = t(symptomKey as never);
     const current = detail.symptoms;
     updateDayDetail(dateStr, {
       symptoms: current.includes(translated) ? current.filter((s) => s !== translated) : [...current, translated],
@@ -384,9 +393,10 @@ export function PeriodLogScreen({ onNavigate }: { onNavigate: (page: string) => 
               {/* Symptoms */}
               <div>
                 <label className="label-text">{t('selectSymptoms')}</label>
+                <p className="mt-1 mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('physicalSymptomsHeading')}</p>
                 <div className="flex flex-wrap gap-2">
-                  {SYMPTOM_OPTIONS.map((sKey) => {
-                    const translated = t(sKey);
+                  {PHYSICAL_SYMPTOMS.map((sKey) => {
+                    const translated = translateSymptom(sKey, lang);
                     const selected = activeDetail.symptoms.includes(translated);
                     return (
                       <button
@@ -400,11 +410,39 @@ export function PeriodLogScreen({ onNavigate }: { onNavigate: (page: string) => 
                     );
                   })}
                 </div>
+                <p className="mt-4 mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('emotionalSymptomsHeading')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {EMOTIONAL_SYMPTOMS.map((sKey) => {
+                    const translated = translateSymptom(sKey, lang);
+                    const selected = activeDetail.symptoms.includes(translated);
+                    return (
+                      <button
+                        key={sKey}
+                        onClick={() => toggleSymptom(activeDayDate, sKey)}
+                        className={`chip text-xs ${selected ? 'bg-accent-500 text-white' : 'bg-neutral-100 dark:bg-neutral-700/50 text-neutral-600 dark:text-neutral-300'}`}
+                      >
+                        {selected && <Check size={12} />}
+                        {translated}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={customSymptom}
+                    onChange={(e) => setCustomSymptom(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomSymptom(); } }}
+                    placeholder={t('typeYourOwnSymptom')}
+                    className="input-field flex-1"
+                    maxLength={60}
+                  />
+                  <button type="button" onClick={addCustomSymptom} disabled={!customSymptom.trim()} className="btn-primary px-4 text-sm">{t('add')}</button>
+                </div>
               </div>
 
               {/* Notes */}
               <div>
-                <label className="label-text">{t('notes')} <span className="text-neutral-400 font-normal">({t('optional')})</span></label>
+                <label className="label-text">{t('dayNotes')} <span className="text-neutral-400 font-normal">({t('optional')})</span></label>
                 <textarea
                   value={activeDetail.notes}
                   onChange={(e) => updateDayDetail(activeDayDate, { notes: e.target.value })}
@@ -417,18 +455,6 @@ export function PeriodLogScreen({ onNavigate }: { onNavigate: (page: string) => 
           )}
         </div>
       )}
-
-      {/* Period-level notes */}
-      <div className="card p-5">
-        <label className="label-text">{t('periodNotes')} <span className="text-neutral-400 font-normal">({t('optional')})</span></label>
-        <textarea
-          value={periodNotes}
-          onChange={(e) => setPeriodNotes(e.target.value)}
-          placeholder={t('addNotes')}
-          rows={2}
-          className="input-field resize-none"
-        />
-      </div>
 
       {/* Actions */}
       <div className="flex gap-3">

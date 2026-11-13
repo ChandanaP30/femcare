@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sos_channel_shortcut">सेफ्टी शॉर्टकट</string>
+    <string name="sos_channel_status">सेफ्टी शॉर्टकट स्थिति</string>
+    <string name="sos_shortcut_title">सेफ्टी शॉर्टकट</string>
+    <string name="sos_shortcut_text">अपने आपातकालीन संपर्कों को संदेश भेजने के लिए भेजें दबाएँ</string>
+    <string name="sos_action_send">भेजें</string>
+    <string name="sos_action_cancel">रद्द करें</string>
+    <string name="sos_countdown_notif">5 सेकंड में SOS भेजा जाएगा</string>
+    <string name="sos_sending">SOS भेजा जा रहा है\u2026</string>
+    <string name="sos_result">SOS %2$d में से %1$d संपर्कों को भेजा गया</string>
+    <string name="sos_result_fail">SOS नहीं भेजा जा सका। कॉल या संदेश के लिए FemCare+ खोलें।</string>
+    <string name="sos_needs_setup">ऑटो-सेंड सेट नहीं है। पूरा करने के लिए FemCare+ खोलें।</string>
+    <string name="sos_countdown_n">SOS %1$d सेकंड में भेजा जाएगा\u2026</string>
+    <string name="sos_getting_location">आपकी लोकेशन ली जा रही है\u2026</string>
+    <string name="sos_location_found">लोकेशन मिल गई।</string>
+    <string name="sos_location_none">लोकेशन उपलब्ध नहीं है। संदेश में यह बताया जाएगा।</string>
+    <string name="sos_sent_n">%2$d में से %1$d को भेजा गया</string>
+    <string name="sos_close">बंद करें</string>
+    <string name="sos_open_panel">आपातकालीन पैनल खोलें</string>
+    <string name="sos_widget_description">SOS: आपातकालीन संपर्कों को अपनी लोकेशन भेजें</string>
+</resources>

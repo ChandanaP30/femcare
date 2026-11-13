@@ -3,10 +3,13 @@ import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
 import type { Period } from '@/lib/types';
 import { formatDate } from '@/lib/cycle';
-import { ChevronRight, Lock, Bell, Palette, Shield, LogOut, Trash2, Info, Globe, CalendarDays, Timer, Droplet, Activity, Pencil, Sparkles, FileText } from 'lucide-react';
+import { ChevronRight, Lock, Bell, Palette, Shield, LogOut, Trash2, Info, Globe, CalendarDays, Timer, Droplet, Activity, Pencil, Sparkles, FileText, Camera } from 'lucide-react';
 import { useLanguage } from '@/lib/language-context';
 import type { NavKey } from '@/components/nav-items';
-import { HeaderArt } from '@/components/PageHeader';
+import { Avatar } from '@/components/Avatar';
+import { AvatarPicker } from '@/components/AvatarPicker';
+import { pt } from '@/lib/picker-text';
+import { readAvatar, type StoredAvatar } from '@/lib/avatar';
 
 interface ProfileScreenProps {
   onNavigate: (page: string) => void;
@@ -14,15 +17,21 @@ interface ProfileScreenProps {
   onSignOut: () => void;
 }
 
+const TONE_PRIMARY = 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300';
+const TONE_ACCENT = 'bg-accent-300 text-ink-onlight dark:bg-accent-600/30 dark:text-accent-300';
+const TONE_SUCCESS = 'bg-success-200 text-success-700 dark:bg-success-700/30 dark:text-success-300';
+const TONE_NEUTRAL = 'bg-secondary-200 text-ink dark:bg-white/10';
+
 export function ProfileScreen({ onNavigate, onSignOut }: ProfileScreenProps) {
   const { profile, user, updateProfile } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [periods, setPeriods] = useState<Period[]>([]);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(profile?.name || '');
   const [cycleLength, setCycleLength] = useState(profile?.cycle_length || 28);
   const [periodDuration, setPeriodDuration] = useState(profile?.period_duration || 5);
   const [saving, setSaving] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const loadPeriods = useCallback(async () => {
     if (!user) return;
@@ -47,54 +56,76 @@ export function ProfileScreen({ onNavigate, onSignOut }: ProfileScreenProps) {
     setEditing(false);
   }
 
+  // The avatar lives in profile.preferences.avatar. Other saved preferences are kept as they are.
+  async function saveAvatar(next: StoredAvatar | null) {
+    const current = { ...((profile?.preferences ?? {}) as Record<string, unknown>) };
+    delete current.avatar;
+    const preferences = next ? { ...current, avatar: next } : current;
+    const { error } = await updateProfile({ preferences });
+    if (error) throw new Error(error);
+  }
+
+  const avatar = readAvatar(profile?.preferences);
   const initial = (profile?.name || user?.email || '?').charAt(0).toUpperCase();
 
   const cycleStats = [
-    { icon: CalendarDays, label: t('averageCycleLength'), value: `${profile?.cycle_length || 28} ${t('days')}`, tone: 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300' },
-    { icon: Timer, label: t('periodDuration'), value: `${profile?.period_duration || 5} ${t('days')}`, tone: 'bg-accent-300 text-ink-onlight dark:bg-accent-600/30 dark:text-accent-300' },
+    { icon: CalendarDays, label: t('averageCycleLength'), value: `${profile?.cycle_length || 28} ${t('days')}`, tone: TONE_PRIMARY },
+    { icon: Timer, label: t('periodDuration'), value: `${profile?.period_duration || 5} ${t('days')}`, tone: TONE_ACCENT },
     { icon: Droplet, label: t('lastPeriodDate'), value: profile?.last_period_date ? formatDate(profile.last_period_date) : '\u2014', tone: 'bg-error-100 text-error-600 dark:bg-error-600/30 dark:text-error-300' },
-    { icon: Activity, label: t('regularity'), value: profile?.cycle_regularity || 'regular', tone: 'bg-success-200 text-success-700 dark:bg-success-700/30 dark:text-success-300', capitalize: true },
+    { icon: Activity, label: t('regularity'), value: profile?.cycle_regularity || 'regular', tone: TONE_SUCCESS, capitalize: true },
   ];
 
-  const accountItems = [
-    { icon: Lock, label: t('changePassword'), action: () => onNavigate('settings') },
-    { icon: Bell, label: t('notifications'), action: () => onNavigate('notifications') },
-    { icon: Palette, label: t('appearance'), action: () => onNavigate('settings') },
-    { icon: Globe, label: t('language'), action: () => onNavigate('settings') },
+  const accountItems: SettingsItem[] = [
+    { icon: Lock, label: t('changePassword'), action: () => onNavigate('settings'), tone: TONE_PRIMARY },
+    { icon: Bell, label: t('notifications'), action: () => onNavigate('notifications'), tone: TONE_ACCENT },
+    { icon: Palette, label: t('appearance'), action: () => onNavigate('settings'), tone: TONE_SUCCESS },
+    { icon: Globe, label: t('language'), action: () => onNavigate('settings'), tone: TONE_NEUTRAL },
   ];
 
-  const privacyItems = [
-    { icon: FileText, label: 'Health report', action: () => onNavigate('report') },
-    { icon: Shield, label: t('privacyData'), action: () => onNavigate('privacy') },
-    { icon: Info, label: t('aboutFemcare'), action: () => onNavigate('about') },
+  const privacyItems: SettingsItem[] = [
+    { icon: FileText, label: 'Health report', action: () => onNavigate('report'), tone: TONE_PRIMARY },
+    { icon: Shield, label: t('privacyData'), action: () => onNavigate('privacy'), tone: TONE_SUCCESS },
+    { icon: Info, label: t('aboutFemcare'), action: () => onNavigate('about'), tone: TONE_NEUTRAL },
+  ];
+
+  const accountActions: SettingsItem[] = [
+    { icon: LogOut, label: t('signOut'), action: onSignOut },
+    { icon: Trash2, label: t('deleteAccountOrData'), action: () => onNavigate('privacy'), danger: true },
   ];
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-4 pb-6">
       {/* Profile hero */}
-      <section className="hero-surface relative overflow-hidden rounded-3xl border border-white/60 p-5 shadow-soft dark:border-white/10">
-        <HeaderArt art="bloom" className="pointer-events-none absolute -right-3 -top-2 h-24 w-24 opacity-90" />
-        <div className="relative flex items-center gap-4 pr-14">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary-200 font-serif text-2xl text-ink-onlight ring-4 ring-white/70 dark:bg-primary-900/60 dark:text-primary-100 dark:ring-white/10">
-            {initial}
-          </span>
+      <section className="hero-surface relative overflow-hidden rounded-2xl border border-white/60 px-4 py-3 shadow-soft dark:border-white/10">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="truncate font-serif text-xl text-ink">{profile?.name || 'User'}</h1>
-            <p className="truncate text-sm text-ink-muted">{user?.email}</p>
+            <h1 className="truncate font-serif text-lg leading-tight text-ink">{profile?.name || 'User'}</h1>
+            <p className="truncate text-xs text-ink-muted">{user?.email}</p>
+            {!editing && (
+              <button
+                onClick={() => setEditing(true)}
+                className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-white dark:bg-white/10 dark:hover:bg-white/20"
+              >
+                <Pencil size={12} strokeWidth={2} />
+                {t('edit')}
+              </button>
+            )}
           </div>
-        </div>
-        {!editing && (
           <button
-            onClick={() => setEditing(true)}
-            className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-white dark:bg-white/10 dark:hover:bg-white/20"
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            aria-label={pt(lang, 'changePicture')}
+            className="group relative shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
           >
-            <Pencil size={14} strokeWidth={2} />
-            {t('edit')}
+            <Avatar avatar={avatar} fallback={initial} size={56} className="ring-2 ring-white/50 dark:ring-white/15" />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 text-white shadow-soft ring-2 ring-white/70 transition-transform group-hover:scale-105 dark:ring-[rgb(var(--card))]">
+              <Camera size={10} strokeWidth={2} />
+            </span>
           </button>
-        )}
+        </div>
 
         {editing && (
-          <div className="relative mt-5 space-y-5 border-t border-white/70 pt-5 dark:border-white/10">
+          <div className="mt-3 space-y-4 border-t border-white/70 pt-3 dark:border-white/10">
             <div>
               <label htmlFor="profile-name" className="label-text">{t('yourName')}</label>
               <input id="profile-name" type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-field" />
@@ -118,29 +149,28 @@ export function ProfileScreen({ onNavigate, onSignOut }: ProfileScreenProps) {
           </div>
         )}
       </section>
-
       {/* Cycle summary */}
       <section>
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between px-1">
           <h3 className="section-title">{t('cycle')}</h3>
           {periods.length > 0 && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
-              <Sparkles size={13} strokeWidth={1.75} />
+            <span className="inline-flex items-center gap-1 text-xs text-ink-muted">
+              <Sparkles size={12} strokeWidth={1.75} />
               {periods.length} {t('period')}
             </span>
           )}
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-2">
           {cycleStats.map((s) => {
             const Icon = s.icon;
             return (
-              <div key={s.label} className="card flex flex-col gap-3 p-4">
-                <span className={`flex h-10 w-10 items-center justify-center rounded-full ${s.tone}`}>
-                  <Icon size={18} strokeWidth={1.75} />
+              <div key={s.label} className="card flex items-center gap-2.5 !rounded-2xl !p-2.5">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.tone}`}>
+                  <Icon size={15} strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs text-ink-muted">{s.label}</p>
-                  <p className={`mt-0.5 truncate text-sm font-semibold text-ink ${s.capitalize ? 'capitalize' : ''}`}>{s.value}</p>
+                  <p className="truncate text-[11px] leading-tight text-ink-muted">{s.label}</p>
+                  <p className={`truncate text-sm font-semibold leading-snug text-ink ${s.capitalize ? 'capitalize' : ''}`}>{s.value}</p>
                 </div>
               </div>
             );
@@ -150,18 +180,22 @@ export function ProfileScreen({ onNavigate, onSignOut }: ProfileScreenProps) {
 
       {/* Settings */}
       <section>
-        <h3 className="section-title mb-3">{t('settings')}</h3>
-        <SettingsGroup items={accountItems} />
+        <h3 className="section-title mb-2 px-1">{t('settings')}</h3>
+        <div className="space-y-2.5">
+          <SettingsGroup items={accountItems} />
+          <SettingsGroup items={privacyItems} />
+          <SettingsGroup items={accountActions} />
+        </div>
       </section>
 
-      <section>
-        <SettingsGroup items={privacyItems} />
-      </section>
-
-      <section className="space-y-3">
-        <SettingsGroup items={[{ icon: LogOut, label: t('signOut'), action: onSignOut }]} />
-        <SettingsGroup items={[{ icon: Trash2, label: t('deleteAccountOrData'), action: () => onNavigate('privacy'), danger: true }]} />
-      </section>
+      {pickerOpen && (
+        <AvatarPicker
+          current={avatar}
+          fallback={initial}
+          onClose={() => setPickerOpen(false)}
+          onSave={saveAvatar}
+        />
+      )}
     </div>
   );
 }
@@ -171,30 +205,31 @@ interface SettingsItem {
   label: string;
   action: () => void;
   danger?: boolean;
+  tone?: string;
 }
 
 function SettingsGroup({ items }: { items: SettingsItem[] }) {
   return (
-    <div className="card divide-y divide-primary-100 overflow-hidden p-0 dark:divide-white/10">
+    <div className="card divide-y divide-primary-100 overflow-hidden !rounded-2xl !p-0 dark:divide-white/10">
       {items.map((item) => {
         const Icon = item.icon;
         return (
           <button
             key={item.label}
             onClick={item.action}
-            className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition-colors hover:bg-primary-50 focus:bg-primary-50 focus:outline-none dark:hover:bg-white/5 dark:focus:bg-white/5"
+            className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-primary-50 focus:bg-primary-50 focus:outline-none dark:hover:bg-white/5 dark:focus:bg-white/5"
           >
             <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                 item.danger
                   ? 'bg-error-100 text-error-600 dark:bg-error-600/30 dark:text-error-300'
-                  : 'bg-secondary-200 text-ink dark:bg-white/10'
+                  : item.tone ?? TONE_NEUTRAL
               }`}
             >
-              <Icon size={17} strokeWidth={1.75} />
+              <Icon size={15} strokeWidth={1.75} />
             </span>
             <span className={`flex-1 text-sm font-medium ${item.danger ? 'text-error-600 dark:text-error-300' : 'text-ink'}`}>{item.label}</span>
-            <ChevronRight size={18} className="shrink-0 text-ink-muted" />
+            <ChevronRight size={16} className="shrink-0 text-ink-muted" />
           </button>
         );
       })}

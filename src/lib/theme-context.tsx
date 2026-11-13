@@ -1,15 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { LanguageCode } from './i18n';
-import { translate } from './i18n';
+import type { Language } from './types';
+import { translate, type TranslationKey } from './i18n';
 
 type Theme = 'light' | 'dark' | 'system';
 
 interface ThemeContextValue {
   theme: Theme;
   setTheme: (t: Theme) => void;
-  language: LanguageCode;
-  setLanguage: (l: LanguageCode) => void;
-  t: (key: string) => string;
+  language: Language;
+  setLanguage: (l: Language) => void;
+  t: (key: TranslationKey) => string;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -18,8 +18,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     return (localStorage.getItem('femcare_theme') as Theme) || 'system';
   });
-  const [language, setLanguageState] = useState<LanguageCode>(() => {
-    return (localStorage.getItem('femcare_lang') as LanguageCode) || 'en';
+  const [language, setLanguageState] = useState<Language>(() => {
+    return (localStorage.getItem('femcare_lang') as Language) || 'en';
   });
 
   useEffect(() => {
@@ -41,12 +41,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState(t);
   };
 
-  const setLanguage = (l: LanguageCode) => {
+  const setLanguage = (l: Language) => {
     localStorage.setItem('femcare_lang', l);
     setLanguageState(l);
   };
 
-  const t = (key: string) => translate(language, key);
+  const t = (key: TranslationKey) => translate(key as TranslationKey, language as Language);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, language, setLanguage, t }}>

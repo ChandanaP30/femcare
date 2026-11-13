@@ -1,0 +1,7 @@
+method_A,method_B,MAE_diff_A_minus_B,CI95_low,CI95_high,CI_excludes_zero,meets_practical_threshold,meaningful,better
+gradient_boosting,app_ewma,-0.021,-0.082,0.039,False,False,False,gradient_boosting
+ridge,app_ewma,-0.05,-0.102,0.006,False,False,False,ridge
+gradient_boosting,ridge,0.029,-0.029,0.093,False,False,False,ridge
+app_ewma,last_cycle,-0.458,-0.561,-0.355,True,True,True,app_ewma
+gradient_boosting,last_cycle,-0.479,-0.589,-0.374,True,True,True,gradient_boosting
+ridge,last_cycle,-0.508,-0.608,-0.408,True,True,True,ridge

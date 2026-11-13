@@ -4,6 +4,7 @@ import { SettingsProvider } from '@/lib/settings-context';
 import { LanguageProvider } from '@/lib/language-context';
 import { CryptoProvider } from '@/lib/crypto-context';
 import { CryptoGate } from '@/screens/UnlockScreen';
+import { SosQuickHost } from '@/components/SosQuick';
 import { SplashScreen } from '@/screens/SplashScreen';
 import { OnboardingScreen } from '@/screens/OnboardingScreen';
 import { AuthScreen } from '@/screens/AuthScreen';
@@ -27,6 +28,8 @@ import { PeriodLogScreen } from '@/screens/PeriodLogScreen';
 import { PeriodHistoryScreen } from '@/screens/PeriodHistoryScreen';
 import { NotificationSettingsScreen } from '@/screens/NotificationSettingsScreen';
 import { ReminderSync } from '@/lib/reminder-sync';
+import { SessionGuard } from '@/components/SessionGuard';
+import { SessionNotice } from '@/components/SessionNotice';
 import { cancelAllReminders } from '@/lib/reminders';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -60,6 +63,16 @@ function AppContent() {
   // In-app history of pages we came from. Every navigation pushes the page being left,
   // and every back action pops it. A ref keeps popstate handling free of side effects.
   const backStackRef = useRef<AppPage[]>([]);
+
+  // When the person is signed out (including by the inactivity timeout), forget where they were
+  // and stop reminders, so the next person to sign in starts clean.
+  useEffect(() => {
+    if (loading || user) return;
+    backStackRef.current = [];
+    setCurrentPage('home');
+    setCurrentNav('home');
+    void cancelAllReminders();
+  }, [loading, user]);
 
   useEffect(() => {
     const seen = localStorage.getItem('femcare_onboarding_seen');
@@ -158,7 +171,12 @@ function AppContent() {
   }
 
   if (!user) {
-    return <AuthScreen onAuthSuccess={() => {}} />;
+    return (
+      <>
+        <SessionNotice />
+        <AuthScreen onAuthSuccess={() => {}} />
+      </>
+    );
   }
 
   // User is authenticated but hasn't completed onboarding
@@ -214,6 +232,7 @@ function AppContent() {
     <SettingsProvider>
       <AppShell
         currentNav={currentNav}
+        currentPage={currentPage}
         onNavChange={handleNavChange}
         onNavigate={handleNavigate}
         showBack={showBack}
@@ -230,11 +249,14 @@ export default function App() {
   return (
     <AuthProvider>
       <LanguageProvider>
-        <CryptoProvider>
-          <CryptoGate>
-            <AppContent />
-          </CryptoGate>
-        </CryptoProvider>
+        <SosQuickHost>
+          <CryptoProvider>
+          <SessionGuard />
+            <CryptoGate>
+              <AppContent />
+            </CryptoGate>
+          </CryptoProvider>
+        </SosQuickHost>
       </LanguageProvider>
     </AuthProvider>
   );

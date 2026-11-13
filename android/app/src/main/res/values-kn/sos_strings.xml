@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sos_channel_shortcut">ಸುರಕ್ಷತಾ ಶಾರ್ಟ್‌ಕಟ್</string>
+    <string name="sos_channel_status">ಸುರಕ್ಷತಾ ಶಾರ್ಟ್‌ಕಟ್ ಸ್ಥಿತಿ</string>
+    <string name="sos_shortcut_title">ಸುರಕ್ಷತಾ ಶಾರ್ಟ್‌ಕಟ್</string>
+    <string name="sos_shortcut_text">ನಿಮ್ಮ ತುರ್ತು ಸಂಪರ್ಕಗಳಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಲು ಕಳುಹಿಸಿ ಒತ್ತಿ</string>
+    <string name="sos_action_send">ಕಳುಹಿಸಿ</string>
+    <string name="sos_action_cancel">ರದ್ದುಮಾಡಿ</string>
+    <string name="sos_countdown_notif">5 ಸೆಕೆಂಡ್‌ನಲ್ಲಿ SOS ಕಳುಹಿಸಲಾಗುತ್ತದೆ</string>
+    <string name="sos_sending">SOS ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ\u2026</string>
+    <string name="sos_result">SOS %2$d ರಲ್ಲಿ %1$d ಸಂಪರ್ಕಗಳಿಗೆ ಕಳುಹಿಸಲಾಗಿದೆ</string>
+    <string name="sos_result_fail">SOS ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ. ಕರೆ ಅಥವಾ ಸಂದೇಶಕ್ಕಾಗಿ FemCare+ ತೆರೆಯಿರಿ.</string>
+    <string name="sos_needs_setup">ಸ್ವಯಂ-ಕಳುಹಿಸುವಿಕೆ ಸೆಟಪ್ ಆಗಿಲ್ಲ. ಪೂರ್ಣಗೊಳಿಸಲು FemCare+ ತೆರೆಯಿರಿ.</string>
+    <string name="sos_countdown_n">SOS %1$d ಸೆಕೆಂಡ್‌ನಲ್ಲಿ ಕಳುಹಿಸಲಾಗುತ್ತದೆ\u2026</string>
+    <string name="sos_getting_location">ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಪಡೆಯಲಾಗುತ್ತಿದೆ\u2026</string>
+    <string name="sos_location_found">ಸ್ಥಳ ಸಿಕ್ಕಿದೆ.</string>
+    <string name="sos_location_none">ಸ್ಥಳ ಲಭ್ಯವಿಲ್ಲ. ಸಂದೇಶದಲ್ಲಿ ಅದನ್ನು ತಿಳಿಸಲಾಗುತ್ತದೆ.</string>
+    <string name="sos_sent_n">%2$d ರಲ್ಲಿ %1$d ಕ್ಕೆ ಕಳುಹಿಸಲಾಗಿದೆ</string>
+    <string name="sos_close">ಮುಚ್ಚಿ</string>
+    <string name="sos_open_panel">ತುರ್ತು ಪ್ಯಾನೆಲ್ ತೆರೆಯಿರಿ</string>
+    <string name="sos_widget_description">SOS: ತುರ್ತು ಸಂಪರ್ಕಗಳಿಗೆ ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ಕಳುಹಿಸಿ</string>
+</resources>

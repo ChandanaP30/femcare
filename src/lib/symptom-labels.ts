@@ -13,6 +13,7 @@ const KEY_FOR: Record<string, TranslationKey> = {
   'Diarrhea': 'symDiarrhea', 'Insomnia': 'symInsomnia', 'Spotting': 'symSpotting', 'Frequent urination': 'symFrequentUrination',
   'Chills': 'symChills', 'Crying spells': 'symCryingSpells', 'Anger': 'symAnger', 'Low concentration': 'symLowConcentration',
   'Low motivation': 'symLowMotivation', 'Overwhelmed': 'symOverwhelmed', 'Calm': 'symCalm',
+  'Increased appetite': 'symIncreasedAppetite', 'Tension': 'symTension', 'Thigh pain': 'symThighPain',
 };
 
 export function translateSymptom(value: string, lang: Language): string {

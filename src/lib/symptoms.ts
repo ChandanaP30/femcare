@@ -1,25 +1,12 @@
-import type { DailyLog, Period } from './types';
+import type { DailyLog, Period, Language } from './types';
+import type { TranslationKey } from './i18n';
+import { translateSymptom, translateMood } from './symptom-labels';
 
-export const PHYSICAL_SYMPTOMS = [
-  'Cramps',
-  'Headache',
-  'Back pain',
-  'Bloating',
-  'Acne',
-  'Fatigue',
-  'Nausea',
-  'Breast tenderness',
-  'Dizziness',
-];
+import { SYMPTOM_KNOWLEDGE } from './symptomKnowledge';
 
-export const EMOTIONAL_SYMPTOMS = [
-  'Irritability',
-  'Anxiety',
-  'Sadness',
-  'Mood swings',
-  'Stress',
-  'Low energy',
-];
+// The single master list. Every screen (setup, log, symptoms, home) reads these.
+export const PHYSICAL_SYMPTOMS: string[] = SYMPTOM_KNOWLEDGE.filter((s) => s.category === 'physical').map((s) => s.key);
+export const EMOTIONAL_SYMPTOMS: string[] = SYMPTOM_KNOWLEDGE.filter((s) => s.category === 'emotional').map((s) => s.key);
 
 export const ALL_SYMPTOMS = [...PHYSICAL_SYMPTOMS, ...EMOTIONAL_SYMPTOMS];
 
@@ -49,16 +36,22 @@ export function generateInsights(
   periods: Period[],
   dailyLogs: DailyLog[],
   cycleLength: number,
-  periodDuration: number
+  periodDuration: number,
+  tr?: (key: TranslationKey, params?: Record<string, string | number>) => string,
+  lang?: Language
 ): Insight[] {
   const insights: Insight[] = [];
+  // Stored symptom and mood values are English. Show them in the chosen language.
+  const sym = (s: string) => (lang ? translateSymptom(s, lang) : s);
+  const moodName = (s: string) => (lang ? translateMood(s, lang) : s);
 
   if (periods.length === 0 && dailyLogs.length === 0) {
     insights.push({
       type: 'reminder',
-      title: 'Welcome to FemCare+',
-      description:
-        'Start by logging your period and daily symptoms. The more you log, the more personalised your insights become.',
+      title: tr ? tr('welcomeToFemcare') : 'Welcome to FemCare+',
+      description: tr
+        ? tr('startByLogging')
+        : 'Start by logging your period and daily symptoms. The more you log, the more personalised your insights become.',
     });
     return insights;
   }
@@ -81,8 +74,10 @@ export function generateInsights(
     const percentage = Math.round((topSymptom[1] / totalLogs) * 100);
     insights.push({
       type: 'frequency',
-      title: 'Most frequent symptom',
-      description: `You logged "${topSymptom[0]}" on ${topSymptom[1]} of ${totalLogs} days (${percentage}%). If this symptom is severe or persistent, consider speaking with a healthcare professional.`,
+      title: tr ? tr('insMostFrequentTitle') : 'Most frequent symptom',
+      description: tr
+        ? tr('insMostFrequentBody', { symptom: sym(topSymptom[0]), count: topSymptom[1], total: totalLogs, pct: percentage })
+        : 'You logged "' + topSymptom[0] + '" on ' + topSymptom[1] + ' of ' + totalLogs + ' days (' + percentage + '%). If this symptom is severe or persistent, consider speaking with a healthcare professional.',
     });
   }
 
@@ -113,8 +108,10 @@ export function generateInsights(
       if (topPeriodSymptom) {
         insights.push({
           type: 'pattern',
-          title: 'Symptoms during your period',
-          description: `You logged "${topPeriodSymptom[0]}" on ${topPeriodSymptom[1]} of your last ${periodLogs.length} period day(s).`,
+          title: tr ? tr('insPeriodSymptomTitle') : 'Symptoms during your period',
+          description: tr
+            ? tr('insPeriodSymptomBody', { symptom: sym(topPeriodSymptom[0]), count: topPeriodSymptom[1], total: periodLogs.length })
+            : 'You logged "' + topPeriodSymptom[0] + '" on ' + topPeriodSymptom[1] + ' of your last ' + periodLogs.length + ' period day(s).',
         });
       }
     }
@@ -140,16 +137,21 @@ export function generateInsights(
       const diff = Math.abs(last - avg);
 
       if (diff > 5) {
+        const longer = last > avg;
         insights.push({
           type: 'cycle',
-          title: 'Cycle length variation',
-          description: `Your last cycle was ${last} days, which is ${diff} days ${last > avg ? 'longer' : 'shorter'} than your average of ${avg} days. Some variation is normal. If cycles are consistently irregular, consider speaking with a healthcare professional.`,
+          title: tr ? tr('insCycleVariationTitle') : 'Cycle length variation',
+          description: tr
+            ? tr(longer ? 'insCycleLongerBody' : 'insCycleShorterBody', { last, diff, avg })
+            : 'Your last cycle was ' + last + ' days, which is ' + diff + ' days ' + (longer ? 'longer' : 'shorter') + ' than your average of ' + avg + ' days. Some variation is normal. If cycles are consistently irregular, consider speaking with a healthcare professional.',
         });
       } else {
         insights.push({
           type: 'cycle',
-          title: 'Cycle consistency',
-          description: `Your recent cycles average ${avg} days, which is within a typical range. Keep logging to maintain accurate tracking.`,
+          title: tr ? tr('insCycleConsistencyTitle') : 'Cycle consistency',
+          description: tr
+            ? tr('insCycleConsistencyBody', { avg })
+            : 'Your recent cycles average ' + avg + ' days, which is within a typical range. Keep logging to maintain accurate tracking.',
         });
       }
     }
@@ -164,8 +166,10 @@ export function generateInsights(
     if (highPainDays > 0) {
       insights.push({
         type: 'pattern',
-        title: 'Pain levels',
-        description: `Your average pain level is ${avgPain}/10, with ${highPainDays} day(s) rated 7 or above. If you experience severe pain regularly, this is worth discussing with a qualified healthcare professional.`,
+        title: tr ? tr('insPainTitle') : 'Pain levels',
+        description: tr
+          ? tr('insPainBody', { avg: avgPain, days: highPainDays })
+          : 'Your average pain level is ' + avgPain + '/10, with ' + highPainDays + ' day(s) rated 7 or above. If you experience severe pain regularly, this is worth discussing with a qualified healthcare professional.',
       });
     }
   }
@@ -180,26 +184,33 @@ export function generateInsights(
   if (dominantMood && (dominantMood[0] === 'low' || dominantMood[0] === 'difficult')) {
     insights.push({
       type: 'pattern',
-      title: 'Mood patterns',
-      description: `You've logged "${dominantMood[0]}" as your most common mood. If you're feeling persistently low, consider reaching out to someone you trust or a mental health professional.`,
+      title: tr ? tr('insMoodTitle') : 'Mood patterns',
+      description: tr
+        ? tr('insMoodBody', { mood: moodName(dominantMood[0]) })
+        : 'You logged "' + dominantMood[0] + '" as your most common mood. If you feel persistently low, consider reaching out to someone you trust or a mental health professional.',
     });
   }
 
   // Self-care suggestions based on phase
   insights.push({
     type: 'selfcare',
-    title: 'Self-care reminder',
+    title: tr ? tr('insSelfCareTitle') : 'Self-care reminder',
     description:
-      'Staying hydrated, getting enough sleep, and gentle movement can help manage symptoms throughout your cycle. Consider tracking these alongside your symptoms.',
+      tr ? tr('insSelfCareBody') : 'Staying hydrated, getting enough sleep, and gentle movement can help manage symptoms throughout your cycle. Consider tracking these alongside your symptoms.',
   });
 
   if (insights.length < 2) {
     insights.push({
       type: 'reminder',
-      title: 'Keep logging',
-      description: 'More data is needed to show additional patterns. Try logging daily for more personalised insights.',
+      title: tr ? tr('insKeepLoggingTitle') : 'Keep logging',
+      description: tr
+        ? tr('moreDataNeeded')
+        : 'More data is needed to show additional patterns. Try logging daily for more personalised insights.',
     });
   }
 
   return insights;
 }
+
+export const EXTRA_PHYSICAL: string[] = ['Joint pain', 'Leg pain', 'Food cravings', 'Constipation', 'Diarrhea', 'Insomnia', 'Spotting', 'Frequent urination', 'Chills'];
+export const EXTRA_EMOTIONAL: string[] = ['Crying spells', 'Anger', 'Low concentration', 'Low motivation', 'Overwhelmed', 'Calm'];

@@ -1,0 +1,6 @@
+    rule    n  MAE_all  RMSE_all  n_targets_over60  MAE_over60  MAE_le60
+ current 2582    3.668     6.241                23       35.09     3.386
+    wide 2582    4.788     8.629                23       29.48     4.566
+personal 2582    4.187     7.962                23       30.83     3.947
+  rule    n  MAE_all  RMSE_all  n_targets_over60  MAE_over60  MAE_le60
+hybrid 2582    3.681     6.268                23       34.52     3.404

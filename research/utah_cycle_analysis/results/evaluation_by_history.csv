@@ -1,0 +1,13 @@
+history,method,n,MAE,RMSE
+1,last_cycle,95,3.705,7.497
+1,ewma,95,3.705,7.497
+1,gradient_boosting,95,3.501,7.285
+2,last_cycle,81,4.42,10.135
+2,ewma,81,3.83,8.65
+2,gradient_boosting,81,3.647,8.649
+3-5,last_cycle,194,3.366,6.432
+3-5,ewma,194,2.874,5.628
+3-5,gradient_boosting,194,2.746,4.826
+6+,last_cycle,167,3.246,4.475
+6+,ewma,167,2.414,3.398
+6+,gradient_boosting,167,2.498,3.574

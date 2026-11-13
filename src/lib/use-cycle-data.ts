@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from './supabase';
-import type { Period, SymptomEntry } from './types';
+import type { Period, DailyLog } from './types';
 
 export function useCycleData(userId?: string) {
   const [periods, setPeriods] = useState<Period[]>([]);
-  const [symptoms, setSymptoms] = useState<SymptomEntry[]>([]);
+  const [symptoms, setSymptoms] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (uid: string) => {
@@ -14,7 +14,7 @@ export function useCycleData(userId?: string) {
       supabase.from('symptoms').select('*').eq('user_id', uid).order('entry_date', { ascending: true }),
     ]);
     setPeriods((pRes.data as unknown as Period[]) || []);
-    setSymptoms((sRes.data as unknown as SymptomEntry[]) || []);
+    setSymptoms((sRes.data as unknown as DailyLog[]) || []);
     setLoading(false);
   }, []);
 

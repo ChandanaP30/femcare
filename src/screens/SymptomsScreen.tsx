@@ -9,12 +9,10 @@ import { useLanguage } from '@/lib/language-context';
 import { todayStr } from '@/lib/cycle';
 import { PageHeader } from '@/components/PageHeader';
 
-const EXTRA_PHYSICAL = ['Joint pain', 'Leg pain', 'Food cravings', 'Constipation', 'Diarrhea', 'Insomnia', 'Spotting', 'Frequent urination', 'Chills'];
-const EXTRA_EMOTIONAL = ['Crying spells', 'Anger', 'Low concentration', 'Low motivation', 'Overwhelmed', 'Calm'];
 const BASE_PHYSICAL = PHYSICAL_SYMPTOMS as readonly string[];
 const BASE_EMOTIONAL = EMOTIONAL_SYMPTOMS as readonly string[];
-const PHYSICAL_ALL: string[] = [...BASE_PHYSICAL, ...EXTRA_PHYSICAL.filter((x) => !BASE_PHYSICAL.includes(x))];
-const EMOTIONAL_ALL: string[] = [...BASE_EMOTIONAL, ...EXTRA_EMOTIONAL.filter((x) => !BASE_EMOTIONAL.includes(x))];
+const PHYSICAL_ALL: string[] = [...BASE_PHYSICAL];
+const EMOTIONAL_ALL: string[] = [...BASE_EMOTIONAL];
 const KNOWN = new Set<string>([...PHYSICAL_ALL, ...EMOTIONAL_ALL]);
 
 export function SymptomsScreen() {

@@ -27,6 +27,9 @@ export const OFFLINE_TABLES = [
   'emergency_contacts',
   'user_settings',
   'chat_messages',
+  'symptoms',
+  'chat_history',
+  'symptom_alerts',
 ] as const;
 type Table = (typeof OFFLINE_TABLES)[number];
 
@@ -35,6 +38,7 @@ const UNIQUE_KEYS: Partial<Record<Table, string[]>> = {
   daily_logs: ['user_id', 'log_date'],
   period_day_logs: ['user_id', 'log_date'],
   user_settings: ['user_id'],
+  symptom_alerts: ['user_id', 'cycle_key'],
 };
 
 // Rows that the database deletes automatically when their parent is deleted.

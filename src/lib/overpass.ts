@@ -648,33 +648,67 @@ export async function findNearbyPlaces(
 
 // ------------------------------------------------------------------ device location
 
-export function getCurrentPosition(): Promise<{ lat: number; lon: number }> {
+type Fix = { lat: number; lon: number };
+type GeoError = { code: number; PERMISSION_DENIED: number; POSITION_UNAVAILABLE: number; TIMEOUT: number; message?: string };
+
+const timeoutError = (): GeoError => ({ code: 3, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 });
+
+function geoMessage(error: GeoError): string {
+  if (error.code === error.PERMISSION_DENIED) {
+    return 'Location access is required to find nearby services. You can enable it from your device or browser settings.';
+  }
+  if (error.code === error.POSITION_UNAVAILABLE) return 'Location information is unavailable. Please try again.';
+  if (error.code === error.TIMEOUT) return 'Location request took too long. Please try again.';
+  return 'Unable to get your location.';
+}
+
+// Finds the device location in three steps:
+// 1. a quick, low-accuracy request (a cached fix up to 10 minutes old is acceptable), and at the same time
+//    a watch, which can deliver a fix that the single request missed;
+// 2. at 12.5 s, if still nothing, one high-accuracy (GPS) request;
+// 3. at 35 s, give up with a message that explains what to do.
+// Permission denial stops at once. The watch is always stopped when the search ends.
+export function getCurrentPosition(): Promise<Fix> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation is not supported by your browser.'));
       return;
     }
+    const geo = navigator.geolocation;
+    let done = false;
+    let watchId: number | null = null;
+    let lastError: GeoError | null = null;
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          lat: position.coords.latitude,
-          lon: position.coords.longitude,
-        });
-      },
-      (error) => {
-        let message = 'Unable to get your location.';
-        if (error.code === error.PERMISSION_DENIED) {
-          message =
-            'Location access is required to find nearby services. You can enable it from your device or browser settings.';
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = 'Location information is unavailable. Please try again.';
-        } else if (error.code === error.TIMEOUT) {
-          message = 'Location request timed out. Please try again.';
-        }
-        reject(new Error(message));
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
-    );
+    const finish = (fix?: Fix, error?: GeoError) => {
+      if (done) return;
+      done = true;
+      timers.forEach(clearTimeout);
+      if (watchId !== null) geo.clearWatch(watchId);
+      if (fix) resolve(fix);
+      else reject(new Error(geoMessage(error ?? lastError ?? timeoutError())));
+    };
+    const ok = (p: GeolocationPosition) => finish({ lat: p.coords.latitude, lon: p.coords.longitude });
+    const fail = (e: GeolocationPositionError) => {
+      lastError = e as unknown as GeoError;
+      if (e.code === e.PERMISSION_DENIED) finish(undefined, lastError);
+    };
+
+    // Step 1: quick attempt, and the watch started at the same moment
+    watchId = geo.watchPosition(ok, fail, { enableHighAccuracy: false, timeout: 20000, maximumAge: 600000 });
+    geo.getCurrentPosition(ok, fail, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+
+    // Step 2: high-accuracy (GPS) request. The quick watch is stopped here so it does not run alongside GPS.
+    timers.push(setTimeout(() => {
+      if (done) return;
+      if (watchId !== null) geo.clearWatch(watchId);
+      geo.getCurrentPosition(ok, (e) => {
+        fail(e);
+        finish(undefined, e as unknown as GeoError);
+      }, { enableHighAccuracy: true, timeout: 23000, maximumAge: 0 });
+    }, 12500));
+
+    // Step 3: give up
+    timers.push(setTimeout(() => finish(undefined, timeoutError()), 35000));
   });
 }

@@ -102,7 +102,7 @@ describe('calendar edge cases', () => {
       const info = computeCycleInfo(prof(), periods)!;
       expect(info.currentDay).toBeGreaterThanOrEqual(1);
       expect(info.currentDay).toBeLessThanOrEqual(info.cycleLength);
-      expect(info.nextPeriodDate >= toDateStr(now)).toBe(true);
+      expect(info.nextPeriodDate! >= toDateStr(now)).toBe(true);
     }
   });
 

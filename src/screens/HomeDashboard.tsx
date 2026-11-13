@@ -1,18 +1,17 @@
-import { translateSymptom, translateMood } from '@/lib/symptom-labels';
-import { getLangCode } from '@/lib/lang-store';
-import { createPortal } from 'react-dom';
-import { Sparkles as FabSparkles } from 'lucide-react';
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
+import { getLangCode } from '@/lib/lang-store';
 import { supabase } from '@/lib/supabase';
 import type { Period, DailyLog } from '@/lib/types';
+import type { NavKey } from '@/components/nav-items';
 import MLCyclePrediction from '@/components/MLCyclePrediction';
 import { HeroBloom, PhaseIllustration } from '@/components/illustrations';
-import { computeCycleInfo, formatDateShort, parseDate, todayStr } from '@/lib/cycle';
+import { computeCycleInfo, getOverdueInfo, formatDateShort, parseDate, todayStr } from '@/lib/cycle';
+import { overdueText, overdueHint } from '@/lib/overdue-labels';
 import { MOODS, PHYSICAL_SYMPTOMS, EMOTIONAL_SYMPTOMS } from '@/lib/symptoms';
-import { CalendarPlus, Activity, Siren, MapPin, MessageCircle, ShieldCheck, ChevronRight, Droplet } from 'lucide-react';
-import type { NavKey } from '@/components/nav-items';
+import { translateSymptom, translateMood } from '@/lib/symptom-labels';
+import { CalendarPlus, Activity, Siren, MapPin, ShieldCheck, ChevronRight, Droplet, Sparkles as FabSparkles } from 'lucide-react';
 
 interface HomeDashboardProps {
   onNavigate: (page: string) => void;
@@ -32,6 +31,8 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
   const [notes, setNotes] = useState('');
   const [savingLog, setSavingLog] = useState(false);
   const [logSaved, setLogSaved] = useState(false);
+  const [customSymptom, setCustomSymptom] = useState('');
+  const customSymptoms = symptoms.filter((s) => !PHYSICAL_SYMPTOMS.includes(s) && !EMOTIONAL_SYMPTOMS.includes(s));
 
   const today = todayStr();
 
@@ -61,6 +62,7 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
   useEffect(() => { loadData(); }, [loadData]);
 
   const cycleInfo = profile ? computeCycleInfo(profile, periods) : null;
+  const overdue = profile ? getOverdueInfo(profile, periods) : null;
 
   // Average of real logged cycles (gaps between period starts, 15 to 60 days), same basis as Period History.
   const historyAverage = (() => {
@@ -151,6 +153,13 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
     setTimeout(() => setLogSaved(false), 3000);
   }
 
+  function addCustomSymptom() {
+    const v = customSymptom.trim();
+    if (!v) return;
+    if (!symptoms.some((x) => x.toLowerCase() === v.toLowerCase())) setSymptoms((prev) => [...prev, v]);
+    setCustomSymptom('');
+  }
+
   function toggleSymptom(s: string) {
     setSymptoms((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
   }
@@ -158,39 +167,43 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
       </div>
     );
   }
 
   return (
     <div className="space-y-5 pb-8">
-      {/* Hero */}
-      <section className="hero-surface relative overflow-hidden rounded-3xl border border-white/60 dark:border-white/10 p-5 shadow-soft">
-        <HeroBloom className="pointer-events-none absolute -right-3 -top-2 h-32 w-32" />
-        <div className="relative pr-24">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">{todayLabel}</p>
-          <h1 className="mt-1.5 break-words font-serif text-2xl text-ink">
-            {greeting}, {profile?.name || 'there'}
-          </h1>
-        </div>
+      {/* Greeting */}
+      <header className="px-1">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">{todayLabel}</p>
+        <h1 className="mt-1 break-words font-serif text-2xl text-ink">
+          {greeting}, {profile?.name || 'there'}
+        </h1>
+      </header>
 
+      {/* Cycle hero */}
+      <section className="hero-surface relative overflow-hidden rounded-3xl border border-white/60 p-5 shadow-soft dark:border-white/10">
+        <HeroBloom className="pointer-events-none absolute -right-4 -top-3 h-28 w-28" />
         {cycleInfo && phaseKey && phaseDescKey ? (
-          <div className="relative mt-5 flex items-center gap-4">
-            <CycleRing day={cycleInfo.currentDay} total={cycleInfo.cycleLength} />
-            <div className="min-w-0 flex-1">
+          <div className="relative flex items-center gap-4">
+            <CycleRing day={overdue ? cycleInfo.cycleLength : cycleInfo.currentDay} total={cycleInfo.cycleLength} />
+            <div className="min-w-0 flex-1 pr-6">
               <p className="text-xs font-medium text-ink-muted">
-                {t('cycleDay')} {cycleInfo.currentDay} / {cycleInfo.cycleLength}
+                {t('cycleDay')} {overdue ? overdue.cycleDay : `${cycleInfo.currentDay} / ${cycleInfo.cycleLength}`}
               </p>
               <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 text-sm font-medium text-ink dark:bg-white/10">
                 <PhaseIllustration phase={cycleInfo.phase} className="h-4 w-4 text-primary-700 dark:text-primary-200" />
-                {t(phaseKey)}
+                {overdue ? overdueText(lang, overdue.overdueDays) : t(phaseKey)}
               </span>
-              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t(phaseDescKey)}</p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-muted">{overdue ? overdueHint(lang, overdue.overdueDays, formatDateShort(overdue.expectedDate)) : t(phaseDescKey)}</p>
+              {overdue && (
+                <button onClick={() => onNavigate('log-period')} className="btn-primary mt-3 text-sm">{t('logPeriod')}</button>
+              )}
             </div>
           </div>
         ) : (
-          <div className="relative mt-5">
+          <div className="relative">
             <div className="mb-2 flex items-center gap-2.5">
               <Droplet className="text-primary-700 dark:text-primary-200" size={20} />
               <h2 className="font-serif text-lg text-ink">{t('welcomeToFemcare')}</h2>
@@ -204,25 +217,25 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
         )}
       </section>
 
+      {/* Next period */}
       {cycleInfo && (
         <>
-          {/* Next period */}
           <section className="card p-5">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-muted">{t('nextPeriod')}</p>
               {confidenceLabel && <span className="text-xs text-ink-muted">{confidenceLabel}</span>}
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <p className="font-serif text-3xl text-ink">{formatDateShort(cycleInfo.nextPeriodDate)}</p>
+              <p className="font-serif text-3xl text-ink">{formatDateShort(overdue ? overdue.expectedDate : cycleInfo.nextPeriodDate)}</p>
               <span className="inline-flex items-center rounded-full bg-accent-300 px-3 py-1 text-sm font-medium text-ink-onlight dark:bg-accent-600/30 dark:text-accent-300">
-                {cycleInfo.daysUntilNextPeriod > 0 ? t('inAboutDays', { n: cycleInfo.daysUntilNextPeriod }) : t('dueNow')}
+                {overdue ? overdueText(lang, overdue.overdueDays) : cycleInfo.daysUntilNextPeriod > 0 ? t('inAboutDays', { n: cycleInfo.daysUntilNextPeriod }) : t('dueNow')}
               </span>
             </div>
 
             <PhaseBar
               cycleLength={cycleInfo.cycleLength}
               periodDuration={cycleInfo.periodDuration}
-              currentDay={cycleInfo.currentDay}
+              currentDay={overdue ? cycleInfo.cycleLength : cycleInfo.currentDay}
               labels={[t('menstrualPhase'), t('follicularPhase'), t('ovulationPhase'), t('lutealPhase')]}
             />
 
@@ -240,13 +253,6 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
             </button>
           </section>
 
-          {periods.length > 0 && (
-            <MLCyclePrediction
-              periodStarts={periods.map((p) => p.start_date)}
-              appNextPeriodDate={cycleInfo.nextPeriodDate}
-            />
-          )}
-
           {cycleInfo.confidence < 40 && (
             <p className="rounded-2xl bg-accent-100 px-4 py-3 text-center text-sm text-ink-muted dark:bg-accent-600/20">
               {t('logFewMoreCycles')}
@@ -255,29 +261,36 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
         </>
       )}
 
+      {/* SOS, always first in an emergency */}
+      <button
+        onClick={() => onNavChange('sos')}
+        className="flex w-full items-center gap-3 rounded-2xl bg-error-100 px-4 py-3.5 text-left ring-1 ring-error-200 transition-shadow hover:shadow-lift dark:bg-error-600/25 dark:ring-error-600/40"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-error-600 text-white">
+          <Siren size={20} strokeWidth={1.75} />
+        </span>
+        <span className="text-sm font-semibold text-error-600 dark:text-error-200">{t('sos')}</span>
+        <ChevronRight size={18} className="ml-auto text-error-600 dark:text-error-200" />
+      </button>
+
       {/* Quick actions */}
       <section>
         <h3 className="section-title mb-3">{t('quickActions')}</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <QuickAction icon={CalendarPlus} label={t('logPeriod')} onClick={() => onNavigate('log-period')} tone="primary" />
           <QuickAction icon={Activity} label={t('logSymptoms')} onClick={() => onNavigate('symptoms')} tone="accent" />
-          <QuickAction icon={Siren} label={t('sos')} onClick={() => onNavChange('sos')} tone="error" />
           <QuickAction icon={MapPin} label={t('findPads')} onClick={() => onNavigate('locator')} tone="success" />
-          <QuickAction icon={ShieldCheck} label={t('leaveGuide')} onClick={() => onNavigate('leave-guide')} tone="primary" />
-          <QuickAction icon={MessageCircle} label={t('askAI')} onClick={() => onNavigate('chat')} tone="warning" />
-          {createPortal(
-            <button
-              onClick={() => onNavigate('chat')}
-              aria-label="Ask AI"
-              style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 5.5rem)' }}
-              className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-accent-500 text-white shadow-lg transition-transform active:scale-95"
-            >
-              <FabSparkles size={24} />
-            </button>,
-            document.body
-          )}
+          <QuickAction icon={ShieldCheck} label={t('leaveGuide')} onClick={() => onNavigate('leave-guide')} tone="warning" />
         </div>
       </section>
+
+      {/* Experimental estimate, kept as before */}
+      {cycleInfo && periods.length > 0 && (
+        <MLCyclePrediction
+          periodStarts={periods.map((p) => p.start_date)}
+          appNextPeriodDate={cycleInfo.nextPeriodDate ?? undefined}
+        />
+      )}
 
       {/* Recent symptoms */}
       <section className="card p-5">
@@ -332,8 +345,9 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
         </div>
 
         <p className="label-text">{t('symptoms')}</p>
-        <div className="mb-6 flex flex-wrap gap-2">
-          {[...PHYSICAL_SYMPTOMS.slice(0, 5), ...EMOTIONAL_SYMPTOMS.slice(0, 3)].map((s) => (
+        <p className="mt-2 mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('physicalSymptomsHeading')}</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {PHYSICAL_SYMPTOMS.map((s) => (
             <button
               key={s}
               onClick={() => toggleSymptom(s)}
@@ -347,6 +361,48 @@ export function HomeDashboard({ onNavigate, onNavChange }: HomeDashboardProps) {
               {translateSymptom(s, lang)}
             </button>
           ))}
+        </div>
+        <p className="mt-2 mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{t('emotionalSymptomsHeading')}</p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {EMOTIONAL_SYMPTOMS.map((s) => (
+            <button
+              key={s}
+              onClick={() => toggleSymptom(s)}
+              aria-pressed={symptoms.includes(s)}
+              className={`chip text-xs ${
+                symptoms.includes(s)
+                  ? 'bg-primary-500 text-ink-onlight'
+                  : 'bg-bg-card text-ink-muted ring-1 ring-primary-100 dark:ring-white/15'
+              }`}
+            >
+              {translateSymptom(s, lang)}
+            </button>
+          ))}
+        </div>
+        {customSymptoms.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {customSymptoms.map((s) => (
+              <button
+                key={s}
+                onClick={() => toggleSymptom(s)}
+                aria-pressed={true}
+                className="chip text-xs bg-accent-500 text-white"
+              >
+                {s} &times;
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="mb-6 flex gap-2">
+          <input
+            value={customSymptom}
+            onChange={(e) => setCustomSymptom(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomSymptom(); } }}
+            placeholder={t('typeYourOwnSymptom')}
+            className="input-field flex-1"
+            maxLength={60}
+          />
+          <button type="button" onClick={addCustomSymptom} disabled={!customSymptom.trim()} className="btn-primary px-4 text-sm">{t('add')}</button>
         </div>
 
         <div className="mb-6">
@@ -500,12 +556,12 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className="card flex flex-col items-center gap-2 px-2 py-3.5 transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
+      className="card flex items-center gap-3 p-3.5 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
     >
-      <span className={`flex h-11 w-11 items-center justify-center rounded-full ${TONES[tone]}`}>
-        <Icon size={20} strokeWidth={1.75} />
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${TONES[tone]}`}>
+        <Icon size={19} strokeWidth={1.75} />
       </span>
-      <span className="text-center text-xs font-medium leading-snug text-ink">{label}</span>
+      <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-ink">{label}</span>
     </button>
   );
 }

@@ -50,3 +50,15 @@ android/app/build
 android/build
 android/.gradle
 *.apk
+
+# Build logs and editing backups
+build-*.txt
+gradle-*.txt
+sync-*.txt
+install*.txt
+*.before-*
+legacy-backup-*/
+*.backup.tsx
+*.tsx.bak*
+*.ts.bak*
+leave-head.ts

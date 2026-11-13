@@ -5,10 +5,15 @@ import type { EmergencyContact } from '@/lib/types';
 import { MapPin, Pill, Phone, Plus, Trash2, X, MessageSquare, ShieldCheck, Siren } from 'lucide-react';
 import { useLanguage } from '@/lib/language-context';
 import { PageHeader } from '@/components/PageHeader';
+import { sosText } from '@/lib/sos-i18n';
+import { SosAutoSendCard } from '@/components/SosAutoSendCard';
+import { SosLocationCard } from '@/components/SosLocationCard';
+import { useAutoSendEnabled } from '@/lib/sosNative';
 
 export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }) {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const autoOn = useAutoSendEnabled();
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -80,10 +85,14 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
         </a>
       </section>
 
+      <SosLocationCard />
+
+      <SosAutoSendCard />
+
       {/* Nearby services */}
       <section className="grid grid-cols-2 gap-3">
         <button
-          onClick={() => onNavigate('locator')}
+          onClick={() => { try { sessionStorage.setItem('femcare_locator_preset', JSON.stringify(['pharmacy', 'hospital', 'clinic'])); } catch { /* ignore */ } onNavigate('locator'); }}
           className="card flex flex-col items-start gap-3 p-4 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
         >
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
@@ -95,7 +104,7 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
           </span>
         </button>
         <button
-          onClick={() => onNavigate('locator')}
+          onClick={() => { try { sessionStorage.setItem('femcare_locator_preset', JSON.stringify(['sanitary'])); } catch { /* ignore */ } onNavigate('locator'); }}
           className="card flex flex-col items-start gap-3 p-4 text-left transition-shadow hover:shadow-lift focus:outline-none focus:ring-2 focus:ring-primary-300"
         >
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-300 text-ink-onlight dark:bg-accent-600/30 dark:text-accent-300">
@@ -177,7 +186,7 @@ export function SosScreen({ onNavigate }: { onNavigate: (page: string) => void }
       {/* Safety notice */}
       <section className="flex items-start gap-3 rounded-2xl border border-success-200 bg-success-50 p-4 dark:border-white/10 dark:bg-success-700/30">
         <ShieldCheck size={20} strokeWidth={1.75} className="mt-0.5 shrink-0 text-success-700 dark:text-success-300" />
-        <p className="text-sm leading-relaxed text-ink">{t('femcareNoAutoSend')}</p>
+        <p className="text-sm leading-relaxed text-ink">{autoOn ? sosText(lang, 'autoOnNotice') : t('femcareNoAutoSend')}</p>
       </section>
 
       {/* Add contact dialog */}

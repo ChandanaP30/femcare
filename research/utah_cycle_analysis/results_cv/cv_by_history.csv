@@ -1,0 +1,17 @@
+history_cycles,method,n,MAE
+1,last_cycle,475,3.931
+1,app_ewma,475,3.642
+1,ridge,475,3.517
+1,gradient_boosting,475,3.577
+2,last_cycle,409,4.002
+2,app_ewma,409,3.601
+2,ridge,409,3.471
+2,gradient_boosting,409,3.556
+3-5,last_cycle,901,3.63
+3-5,app_ewma,901,3.147
+3-5,ridge,901,3.141
+3-5,gradient_boosting,901,3.151
+6+,last_cycle,797,2.803
+6+,app_ewma,797,2.245
+6+,ridge,797,2.231
+6+,gradient_boosting,797,2.234

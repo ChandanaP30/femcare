@@ -9,6 +9,7 @@ export type Language = 'en' | 'hi' | 'kn';
 
 export interface LeavePolicy {
   id: string;
+  basis: 'law' | 'government_policy' | 'unstated';
   country: string;
   state: string | null;
   district: string | null;
@@ -91,11 +92,6 @@ export const COUNTRIES: CountryOption[] = [
         name: { en: 'Bihar', hi: 'बिहार', kn: 'ಬಿಹಾರ್' },
         districts: ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur', 'Darbhanga', 'Purnia', 'Arrah (Bhojpur)', 'Begusarai', 'Chapra (Saran)', 'Katihar', 'Munger', 'Bettiah (West Champaran)', 'Motihari (East Champaran)', 'Sasaram (Rohtas)', 'Danapur (Patna)', 'Hajipur (Vaishali)', 'Dehri-on-Sone (Rohtas)', 'Siwan', 'Gopalganj', 'Madhepura', 'Supaul', 'Araria', 'Kishanganj', 'Madhubani', 'Samastipur', 'Nalanda', 'Jehanabad', 'Aurangabad', 'Nawada', 'Sheikhpura', 'Sitamarhi', 'Sheohar', 'Lakhisarai', 'Banka', 'Khagaria', 'Buxar', 'Bhabua (Kaimur)'],
       },
-      {
-        code: 'OTHER',
-        name: { en: 'Other State', hi: 'अन्य राज्य', kn: 'ಇತರ ರಾಜ್ಯ' },
-        districts: [],
-      },
     ],
   },
   {
@@ -153,23 +149,13 @@ export const COUNTRIES: CountryOption[] = [
       },
     ],
   },
-  {
-    code: 'OTHER',
-    name: { en: 'Other Country', hi: 'अन्य देश', kn: 'ಇತರ ದೇಶ' },
-    states: [
-      {
-        code: 'ALL',
-        name: { en: 'All States', hi: 'सभी राज्य', kn: 'ಎಲ್ಲಾ ರಾಜ್ಯಗಳು' },
-        districts: [],
-      },
-    ],
-  },
 ];
 
 // Only verified policies are listed here. Each entry MUST have a real official source URL.
 export const LEAVE_POLICIES: LeavePolicy[] = [
   {
     id: 'kerala-employee-2024',
+    basis: 'unstated',
     country: 'IN',
     state: 'KR',
     district: null,
@@ -202,6 +188,7 @@ export const LEAVE_POLICIES: LeavePolicy[] = [
   },
   {
     id: 'karnataka-student-2023',
+    basis: 'unstated',
     country: 'IN',
     state: 'KA',
     district: null,
@@ -234,6 +221,7 @@ export const LEAVE_POLICIES: LeavePolicy[] = [
   },
   {
     id: 'japan-employee-1947',
+    basis: 'law',
     country: 'JP',
     state: null,
     district: null,
@@ -266,6 +254,7 @@ export const LEAVE_POLICIES: LeavePolicy[] = [
   },
   {
     id: 'taiwan-employee-2013',
+    basis: 'law',
     country: 'TW',
     state: null,
     district: null,
@@ -298,6 +287,7 @@ export const LEAVE_POLICIES: LeavePolicy[] = [
   },
   {
     id: 'indonesia-employee-2003',
+    basis: 'law',
     country: 'ID',
     state: null,
     district: null,
@@ -330,6 +320,7 @@ export const LEAVE_POLICIES: LeavePolicy[] = [
   },
   {
     id: 'spain-employee-2023',
+    basis: 'law',
     country: 'ES',
     state: null,
     district: null,
@@ -362,6 +353,7 @@ export const LEAVE_POLICIES: LeavePolicy[] = [
   },
   {
     id: 'zambia-employee-2023',
+    basis: 'law',
     country: 'ZM',
     state: null,
     district: null,
